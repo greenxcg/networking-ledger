@@ -227,7 +227,12 @@
   const REQUIRED_COLUMNS = ['Date','Type','Contact','Company','Notes','FollowUpDate','FollowUpDone','LoggedBy'];
   const SCOPE = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile';
 
-  let cfg = loadConfig();
+  const DEFAULTS = {
+    clientId: '765856117299-r67l2d2hhki5k1g4t83rava6rkmmq96r.apps.googleusercontent.com',
+    apiKey: 'AIzaSyBS-TMDgKhJ0tqE3Jc5cjcjOcNYG7Y1iFQ',
+    sheetName: 'ActivityLog'
+  };
+  let cfg = Object.assign({}, DEFAULTS, loadConfig());
   let tokenClient = null;
   let accessToken = null;
   let me = { name: '', picture: '' };
@@ -384,10 +389,15 @@
           saveConfig();
           closeSettings();
           clearBanner();
-          $('#submitBtn').disabled = false;
-          $('#submitBtn').textContent = 'Add to the ledger';
-          await loadColumns();
-          await refresh();
+          try {
+            await loadColumns();
+            await refresh();
+            $('#submitBtn').disabled = false;
+            $('#submitBtn').textContent = 'Add to the ledger';
+          } catch (err) {
+            console.error(err);
+            showBanner("Couldn't load the sheet: " + escapeHtml(err.message), 'error');
+          }
         }
       })
       .build();
@@ -616,7 +626,11 @@
   }
 
   function buildRowValues(fields) {
-    const width = Math.max(...Object.values(columnIndex)) + 1;
+    const indices = Object.values(columnIndex);
+    if (!indices.length) {
+      throw new Error('Column headers haven\'t loaded yet — click "Refresh from Sheet" and try again.');
+    }
+    const width = Math.max(...indices) + 1;
     const arr = new Array(width).fill('');
     const set = (name, val) => { if (name in columnIndex) arr[columnIndex[name]] = val; };
     set('Date', fields.date);
@@ -675,10 +689,15 @@
     if (cfg.clientId && cfg.apiKey && cfg.spreadsheetId) {
       await authenticate();
       if (accessToken) {
-        $('#submitBtn').disabled = false;
-        $('#submitBtn').textContent = 'Add to the ledger';
-        await loadColumns();
-        await refresh();
+        try {
+          await loadColumns();
+          await refresh();
+          $('#submitBtn').disabled = false;
+          $('#submitBtn').textContent = 'Add to the ledger';
+        } catch (err) {
+          console.error(err);
+          showBanner("Couldn't load the sheet: " + escapeHtml(err.message), 'error');
+        }
       }
     } else {
       openSettings();
