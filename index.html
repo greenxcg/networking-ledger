@@ -294,15 +294,15 @@
   function closeSettings() { $('#settingsOverlay').classList.remove('show'); }
   $('#settingsBtn').addEventListener('click', openSettings);
   $('#settingsCancel').addEventListener('click', closeSettings);
-  $('#settingsConnect').addEventListener('click', async () => {
+  $('#settingsConnect').addEventListener('click', () => {
     const clientId = $('#s-client').value.trim();
     const apiKey = $('#s-apikey').value.trim();
     const sheetName = $('#s-sheetname').value.trim() || 'ActivityLog';
     if (!clientId || !apiKey) { showToast('Client ID and API key are both required.'); return; }
     cfg = Object.assign({}, cfg, { clientId, apiKey, sheetName });
     saveConfig();
-    await authenticate();
-    if (accessToken) await pickFile();
+    tokenClient = null; // force re-init in case clientId changed
+    signIn('setup');
   });
 
   function waitFor(checkFn, timeoutMs, intervalMs) {
@@ -318,32 +318,63 @@
   }
 
   // ---------------- Auth ----------------
-  function authenticate() {
-    return new Promise(async (resolve) => {
-      try {
-        await waitFor(() => window.google && google.accounts && google.accounts.oauth2);
-      } catch (waitErr) {
-        showBanner(escapeHtml(waitErr.message), 'error');
-        resolve();
-        return;
-      }
+  // IMPORTANT: browsers (Safari especially) only allow a popup to open when
+  // triggered synchronously from a real click, with nothing awaited first.
+  // So the token client is built ahead of time in the background, and
+  // requestAccessToken() is always called directly inside a click handler
+  // with no `await` before it.
+  let pendingAction = null; // 'setup' | 'refresh'
+
+  function ensureTokenClient() {
+    if (tokenClient) return true;
+    if (window.google && google.accounts && google.accounts.oauth2) {
       try {
         tokenClient = google.accounts.oauth2.initTokenClient({
           client_id: cfg.clientId,
           scope: SCOPE,
           callback: async (resp) => {
-            if (resp.error) { showBanner('Sign-in failed: ' + escapeHtml(resp.error), 'error'); resolve(); return; }
+            if (resp.error) { showBanner('Sign-in failed: ' + escapeHtml(resp.error), 'error'); return; }
             accessToken = resp.access_token;
             await loadProfile();
-            resolve();
+            if (pendingAction === 'setup') {
+              await pickFile();
+            } else {
+              try {
+                clearBanner();
+                await loadColumns();
+                await refresh();
+                $('#submitBtn').disabled = false;
+                $('#submitBtn').textContent = 'Add to the ledger';
+              } catch (err) {
+                console.error(err);
+                showBanner("Couldn't load the sheet: " + escapeHtml(err.message), 'error');
+              }
+            }
           }
         });
-        tokenClient.requestAccessToken({ prompt: '' });
+        return true;
       } catch (err) {
         showBanner("Couldn't start Google sign-in: " + escapeHtml(err.message), 'error');
-        resolve();
+        return false;
       }
-    });
+    }
+    return false;
+  }
+
+  // Build the token client as soon as Google's script is ready, without
+  // blocking anything — this runs in the background from page load.
+  (function initInBackground() {
+    if (ensureTokenClient()) return;
+    setTimeout(initInBackground, 150);
+  })();
+
+  function signIn(action) {
+    pendingAction = action;
+    if (!ensureTokenClient()) {
+      showToast("Still loading Google's sign-in — try again in a second.");
+      return;
+    }
+    tokenClient.requestAccessToken({ prompt: '' });
   }
 
   async function loadProfile() {
@@ -378,6 +409,7 @@
     const view = new google.picker.DocsView(google.picker.ViewId.SPREADSHEETS)
       .setMode(google.picker.DocsViewMode.LIST);
     const picker = new google.picker.PickerBuilder()
+      .setAppId(cfg.clientId.split('-')[0])
       .addView(view)
       .setOAuthToken(accessToken)
       .setDeveloperKey(cfg.apiKey)
@@ -411,9 +443,9 @@
       headers: Object.assign({ Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' }, (options && options.headers) || {})
     }, options || {}));
     if (res.status === 401) {
-      // token expired — re-auth silently then let caller retry
-      await authenticate();
-      throw new Error('Session expired — please try again.');
+      accessToken = null;
+      renderSignInPrompt();
+      throw new Error('Your session expired — click "Sign in with Google" above and try again.');
     }
     if (!res.ok) {
       const text = await res.text().catch(() => '');
@@ -685,20 +717,16 @@
   });
 
   // ---------------- Boot ----------------
-  window.addEventListener('load', async () => {
+  function renderSignInPrompt() {
+    const box = $('#viewerBox');
+    box.innerHTML = `<button class="icon-btn" id="signInBtn">Sign in with Google</button><button class="icon-btn" id="settingsBtn">Settings</button>`;
+    $('#signInBtn').addEventListener('click', () => signIn('refresh'));
+    $('#settingsBtn').addEventListener('click', openSettings);
+  }
+
+  window.addEventListener('load', () => {
     if (cfg.clientId && cfg.apiKey && cfg.spreadsheetId) {
-      await authenticate();
-      if (accessToken) {
-        try {
-          await loadColumns();
-          await refresh();
-          $('#submitBtn').disabled = false;
-          $('#submitBtn').textContent = 'Add to the ledger';
-        } catch (err) {
-          console.error(err);
-          showBanner("Couldn't load the sheet: " + escapeHtml(err.message), 'error');
-        }
-      }
+      renderSignInPrompt();
     } else {
       openSettings();
     }
