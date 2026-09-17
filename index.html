@@ -226,7 +226,7 @@
 <div class="modal-overlay" id="settingsOverlay">
   <div class="modal">
     <h2>Connect to Google Sheets</h2>
-    <p class="sub">One-time setup. This file needs two tabs: one for Contacts, one for Interactions.</p>
+    <p class="sub">One-time setup. Contacts and Interactions tabs are required; Companies and Users are optional (enable company editing and permissions).</p>
     <label for="s-client">OAuth Client ID</label>
     <input id="s-client" placeholder="xxxxxxxx.apps.googleusercontent.com">
     <label for="s-apikey">API key</label>
@@ -235,10 +235,32 @@
     <input id="s-contactstab" value="Contacts">
     <label for="s-interactionstab">Interactions tab name</label>
     <input id="s-interactionstab" value="Interactions">
+    <label for="s-companiestab">Companies tab name (optional)</label>
+    <input id="s-companiestab" value="Companies">
+    <label for="s-userstab">Users/Permissions tab name (optional)</label>
+    <input id="s-userstab" value="Users">
     <div id="fileStatus"></div>
     <div class="modal-actions">
       <button class="btn-secondary" id="settingsCancel">Cancel</button>
       <button class="btn-primary" id="settingsConnect">Connect & choose file</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="permissionsOverlay">
+  <div class="modal">
+    <h2>Team permissions</h2>
+    <p class="sub">greenxcg@gmail.com is always an admin. Add teammates below to grant them admin rights too — everyone else can log interactions and add contacts, but not edit existing contacts or companies.</p>
+    <div id="permBanner"></div>
+    <div id="permList"></div>
+    <label for="perm-email" style="margin-top:16px;">Add teammate by email</label>
+    <div class="row2">
+      <input id="perm-email" type="email" placeholder="name@example.com" style="grid-column: 1 / 2;">
+      <select id="perm-role"><option value="admin">Admin</option><option value="member">Member</option></select>
+    </div>
+    <button class="btn-secondary" id="permAddBtn">Add / update</button>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="permClose">Close</button>
     </div>
   </div>
 </div>
@@ -269,28 +291,61 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="editContactOverlay">
+  <div class="modal">
+    <h2>Edit contact</h2>
+    <p class="sub">Admin-only.</p>
+    <label for="ec-name">Name</label><input id="ec-name" required>
+    <label for="ec-company">Company</label><input id="ec-company">
+    <div class="row2">
+      <div><label for="ec-email">Email</label><input id="ec-email" type="email"></div>
+      <div><label for="ec-phone">Phone</label><input id="ec-phone"></div>
+    </div>
+    <div class="row2">
+      <div><label for="ec-industry">Industry</label><input id="ec-industry"></div>
+      <div><label for="ec-howmet">How met</label><input id="ec-howmet"></div>
+    </div>
+    <label for="ec-tags">Tags</label><input id="ec-tags">
+    <div class="modal-actions">
+      <button class="btn-secondary" id="ecCancel">Cancel</button>
+      <button class="btn-primary" id="ecSave">Save changes</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function () {
   const TYPE_LABELS = { email:'Email', lunch:'Lunch', meet:'Meet', referral:'Referral', showtell:'Show and Tell', call:'Call', text:'Text' };
   const CONTACT_FIELDS = ['ContactID','Name','Company','Email','Phone','Industry','HowMet','Tags','CreatedAt','CreatedBy'];
   const INTERACTION_FIELDS = ['InteractionID','ContactID','Type','Date','Notes','FollowUpDate','FollowUpDone','LoggedBy'];
-  const SCOPE = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile';
+  const COMPANY_FIELDS = ['Name','Address','Notes','CreatedAt','CreatedBy'];
+  const USER_FIELDS = ['Email','Role','AddedAt'];
+  const MASTER_ADMIN_EMAIL = 'greenxcg@gmail.com';
+  const SCOPE = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
 
   const DEFAULTS = {
     clientId: '765856117299-r67l2d2hhki5k1g4t83rava6rkmmq96r.apps.googleusercontent.com',
     apiKey: 'AIzaSyBS-TMDgKhJ0tqE3Jc5cjcjOcNYG7Y1iFQ',
     contactsTab: 'Contacts',
-    interactionsTab: 'Interactions'
+    interactionsTab: 'Interactions',
+    companiesTab: 'Companies',
+    usersTab: 'Users'
   };
   let cfg = Object.assign({}, DEFAULTS, loadConfig());
 
   let tokenClient = null;
   let accessToken = null;
-  let me = { name: '', picture: '' };
+  let me = { name: '', picture: '', email: '' };
+  let isAdmin = false;
   let contactsColIdx = {};
   let interactionsColIdx = {};
+  let companiesColIdx = null;   // null = tab not available/enabled
+  let usersColIdx = null;       // null = tab not available/enabled
   let contacts = [];        // {rowIndex, contactId, name, company, email, phone, industry, howMet, tags, createdAt, createdBy}
   let interactions = [];    // {rowIndex, interactionId, contactId, type, date, notes, followUpDate, followUpDone, loggedBy}
+  let companies = [];       // {rowIndex, name, address, notes, createdAt, createdBy}
+  let companiesByName = {};
+  let users = [];            // {rowIndex, email, role, addedAt}
   let contactsById = {};
   let pickerLoaded = false;
   let pendingAction = null; // 'setup' | 'refresh'
@@ -328,6 +383,8 @@
     $('#s-apikey').value = cfg.apiKey || '';
     $('#s-contactstab').value = cfg.contactsTab || 'Contacts';
     $('#s-interactionstab').value = cfg.interactionsTab || 'Interactions';
+    $('#s-companiestab').value = cfg.companiesTab || 'Companies';
+    $('#s-userstab').value = cfg.usersTab || 'Users';
     $('#fileStatus').innerHTML = cfg.fileName ? `<div class="connected-file">Connected file: <strong>${escapeHtml(cfg.fileName)}</strong></div>` : '';
     $('#settingsOverlay').classList.add('show');
   }
@@ -339,8 +396,10 @@
     const apiKey = $('#s-apikey').value.trim();
     const contactsTab = $('#s-contactstab').value.trim() || 'Contacts';
     const interactionsTab = $('#s-interactionstab').value.trim() || 'Interactions';
+    const companiesTab = $('#s-companiestab').value.trim() || 'Companies';
+    const usersTab = $('#s-userstab').value.trim() || 'Users';
     if (!clientId || !apiKey) { showToast('Client ID and API key are both required.'); return; }
-    cfg = Object.assign({}, cfg, { clientId, apiKey, contactsTab, interactionsTab });
+    cfg = Object.assign({}, cfg, { clientId, apiKey, contactsTab, interactionsTab, companiesTab, usersTab });
     saveConfig();
     tokenClient = null;
     signIn('setup');
@@ -409,17 +468,24 @@
       const data = await res.json();
       me.name = data.name || data.email || '';
       me.picture = data.picture || '';
+      me.email = (data.email || '').toLowerCase();
+      computeIsAdmin();
       renderViewer();
     } catch (e) {}
   }
+  function computeIsAdmin() {
+    isAdmin = !!me.email && (me.email === MASTER_ADMIN_EMAIL || users.some(u => u.email.toLowerCase() === me.email && u.role.toLowerCase() === 'admin'));
+  }
   function renderViewer() {
     const box = $('#viewerBox');
+    const permBtn = (isAdmin && usersColIdx) ? `<button class="icon-btn" id="permBtn">Permissions</button>` : '';
     if (me.name) {
-      box.innerHTML = `${me.picture ? `<img src="${me.picture}" alt="">` : ''}<span>Signed in as <strong>${escapeHtml(me.name)}</strong></span><button class="icon-btn" id="settingsBtn">Settings</button>`;
+      box.innerHTML = `${me.picture ? `<img src="${me.picture}" alt="">` : ''}<span>Signed in as <strong>${escapeHtml(me.name)}</strong>${isAdmin ? ' (admin)' : ''}</span>${permBtn}<button class="icon-btn" id="settingsBtn">Settings</button>`;
     } else {
-      box.innerHTML = `<button class="icon-btn" id="settingsBtn">Settings</button>`;
+      box.innerHTML = `${permBtn}<button class="icon-btn" id="settingsBtn">Settings</button>`;
     }
     $('#settingsBtn').addEventListener('click', openSettings);
+    if (permBtn) $('#permBtn').addEventListener('click', openPermissions);
   }
   function renderSignInPrompt() {
     const box = $('#viewerBox');
@@ -508,6 +574,18 @@
     const interactionsTab = await resolveTabName('interactionsTab', 'Interactions');
     contactsColIdx = await loadTabColumns(contactsTab, CONTACT_FIELDS, 'Contacts');
     interactionsColIdx = await loadTabColumns(interactionsTab, INTERACTION_FIELDS, 'Interactions');
+
+    companiesColIdx = null;
+    try {
+      const companiesTab = await resolveTabName('companiesTab', 'Companies');
+      companiesColIdx = await loadTabColumns(companiesTab, COMPANY_FIELDS, 'Companies');
+    } catch (e) { /* optional — company editing just stays disabled */ }
+
+    usersColIdx = null;
+    try {
+      const usersTab = await resolveTabName('usersTab', 'Users');
+      usersColIdx = await loadTabColumns(usersTab, USER_FIELDS, 'Users');
+    } catch (e) { /* optional — permissions management just stays disabled */ }
   }
 
   function normalizeDate(v) {
@@ -535,17 +613,40 @@
       followUpDone: done.toString().toLowerCase() === 'true', loggedBy: get('LoggedBy')
     };
   }
+  function rowToCompany(rowIndex, values) {
+    const get = (name) => (companiesColIdx && name in companiesColIdx) ? (values[companiesColIdx[name]] || '') : '';
+    return { rowIndex, name: get('Name'), address: get('Address'), notes: get('Notes'), createdAt: get('CreatedAt'), createdBy: get('CreatedBy') };
+  }
+  function rowToUser(rowIndex, values) {
+    const get = (name) => (usersColIdx && name in usersColIdx) ? (values[usersColIdx[name]] || '') : '';
+    return { rowIndex, email: (get('Email') || '').toLowerCase(), role: get('Role') || 'member', addedAt: get('AddedAt') };
+  }
 
   async function refresh() {
     viewRoot.innerHTML = '<div class="empty">Reading the sheet…</div>';
     try {
-      const [contactsData, interactionsData] = await Promise.all([
+      const calls = [
         sheetsFetch(`/values/${encodeURIComponent(cfg.contactsTab + '!A2:Z')}`),
         sheetsFetch(`/values/${encodeURIComponent(cfg.interactionsTab + '!A2:Z')}`)
-      ]);
-      contacts = (contactsData.values || []).map((v,i) => rowToContact(i+2, v)).filter(c => c.contactId);
-      interactions = (interactionsData.values || []).map((v,i) => rowToInteraction(i+2, v)).filter(r => r.contactId);
+      ];
+      if (companiesColIdx) calls.push(sheetsFetch(`/values/${encodeURIComponent(cfg.companiesTab + '!A2:Z')}`));
+      if (usersColIdx) calls.push(sheetsFetch(`/values/${encodeURIComponent(cfg.usersTab + '!A2:Z')}`));
+      const results = await Promise.all(calls);
+      const contactsData = results[0], interactionsData = results[1];
+      let i = 2;
+      const companiesData = companiesColIdx ? results[i++] : null;
+      const usersData = usersColIdx ? results[i++] : null;
+
+      contacts = (contactsData.values || []).map((v,idx) => rowToContact(idx+2, v)).filter(c => c.contactId);
+      interactions = (interactionsData.values || []).map((v,idx) => rowToInteraction(idx+2, v)).filter(r => r.contactId);
+      companies = companiesData ? (companiesData.values || []).map((v,idx) => rowToCompany(idx+2, v)).filter(c => c.name) : [];
+      users = usersData ? (usersData.values || []).map((v,idx) => rowToUser(idx+2, v)).filter(u => u.email) : [];
+
       contactsById = {}; contacts.forEach(c => { contactsById[c.contactId] = c; });
+      companiesByName = {}; companies.forEach(c => { companiesByName[c.name.trim().toLowerCase()] = c; });
+
+      computeIsAdmin();
+      renderViewer();
       renderAuthorChips();
       render();
     } catch (err) {
@@ -553,7 +654,10 @@
       viewRoot.innerHTML = `<div class="empty"><span class="big">Couldn't read the sheet</span>${escapeHtml(err.message)}</div>`;
     }
   }
-  $('#refreshBtn').addEventListener('click', refresh);
+  $('#refreshBtn').addEventListener('click', async () => {
+    try { await loadAllColumns(); } catch (e) { console.error(e); showBanner(escapeHtml(e.message), 'error'); return; }
+    refresh();
+  });
 
   // ---------------- Contact typeahead / add-new ----------------
   const contactSearch = $('#f-contact-search');
@@ -649,6 +753,35 @@
     }
   });
 
+  // ---------------- Edit contact modal (admin only) ----------------
+  let editingContactRow = null;
+  function openEditContact(c) {
+    editingContactRow = c.rowIndex;
+    $('#ec-name').value = c.name; $('#ec-company').value = c.company; $('#ec-email').value = c.email;
+    $('#ec-phone').value = c.phone; $('#ec-industry').value = c.industry; $('#ec-howmet').value = c.howMet; $('#ec-tags').value = c.tags;
+    $('#editContactOverlay').classList.add('show');
+  }
+  $('#ecCancel').addEventListener('click', () => $('#editContactOverlay').classList.remove('show'));
+  $('#ecSave').addEventListener('click', async () => {
+    const name = $('#ec-name').value.trim();
+    if (!name) { showToast('Name is required.'); return; }
+    const btn = $('#ecSave'); btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      await updateContactRow(editingContactRow, {
+        name, company: $('#ec-company').value.trim(), email: $('#ec-email').value.trim(), phone: $('#ec-phone').value.trim(),
+        industry: $('#ec-industry').value.trim(), howMet: $('#ec-howmet').value.trim(), tags: $('#ec-tags').value.trim()
+      });
+      $('#editContactOverlay').classList.remove('show');
+      showToast('Contact updated.');
+      const cid = currentContactId;
+      await refresh();
+      openContact(cid);
+    } catch (err) {
+      console.error(err);
+      showToast("Couldn't save — try again.");
+    } finally { btn.disabled = false; btn.textContent = 'Save changes'; }
+  });
+
   function buildRow(width, columnIndex, values) {
     const arr = new Array(width).fill('');
     Object.entries(values).forEach(([name, val]) => { if (name in columnIndex) arr[columnIndex[name]] = val; });
@@ -667,6 +800,90 @@
     });
     return newId;
   }
+
+  async function updateContactRow(rowIndex, fields) {
+    const width = Math.max(...Object.values(contactsColIdx)) + 1;
+    const row = buildRow(width, contactsColIdx, {
+      Name: fields.name, Company: fields.company, Email: fields.email, Phone: fields.phone,
+      Industry: fields.industry, HowMet: fields.howMet, Tags: fields.tags
+    });
+    // preserve columns we're not editing (ContactID, CreatedAt, CreatedBy) by merging with existing row values
+    const existing = contacts.find(c => c.rowIndex === rowIndex);
+    if (existing) {
+      if ('ContactID' in contactsColIdx) row[contactsColIdx['ContactID']] = existing.contactId;
+      if ('CreatedAt' in contactsColIdx) row[contactsColIdx['CreatedAt']] = existing.createdAt;
+      if ('CreatedBy' in contactsColIdx) row[contactsColIdx['CreatedBy']] = existing.createdBy;
+    }
+    const range = encodeURIComponent(`${cfg.contactsTab}!A${rowIndex}:${colToLetter(width-1)}${rowIndex}`);
+    await sheetsFetch(`/values/${range}?valueInputOption=RAW`, { method: 'PUT', body: JSON.stringify({ values: [row] }) });
+  }
+
+  async function upsertCompany(name, address, notes) {
+    if (!companiesColIdx) throw new Error('No Companies tab is connected.');
+    const key = name.trim().toLowerCase();
+    const existing = companiesByName[key];
+    const width = Math.max(...Object.values(companiesColIdx)) + 1;
+    if (existing) {
+      const row = buildRow(width, companiesColIdx, { Name: existing.name, Address: address, Notes: notes, CreatedAt: existing.createdAt, CreatedBy: existing.createdBy });
+      const range = encodeURIComponent(`${cfg.companiesTab}!A${existing.rowIndex}:${colToLetter(width-1)}${existing.rowIndex}`);
+      await sheetsFetch(`/values/${range}?valueInputOption=RAW`, { method: 'PUT', body: JSON.stringify({ values: [row] }) });
+    } else {
+      const row = buildRow(width, companiesColIdx, { Name: name, Address: address, Notes: notes, CreatedAt: todayISO(), CreatedBy: me.name || '' });
+      await sheetsFetch(`/values/${encodeURIComponent(cfg.companiesTab + '!A:A')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, { method: 'POST', body: JSON.stringify({ values: [row] }) });
+    }
+  }
+
+  async function upsertUser(email, role) {
+    if (!usersColIdx) throw new Error('No Users tab is connected.');
+    const key = email.trim().toLowerCase();
+    const existing = users.find(u => u.email === key);
+    const width = Math.max(...Object.values(usersColIdx)) + 1;
+    if (existing) {
+      const row = buildRow(width, usersColIdx, { Email: key, Role: role, AddedAt: existing.addedAt });
+      const range = encodeURIComponent(`${cfg.usersTab}!A${existing.rowIndex}:${colToLetter(width-1)}${existing.rowIndex}`);
+      await sheetsFetch(`/values/${range}?valueInputOption=RAW`, { method: 'PUT', body: JSON.stringify({ values: [row] }) });
+    } else {
+      const row = buildRow(width, usersColIdx, { Email: key, Role: role, AddedAt: todayISO() });
+      await sheetsFetch(`/values/${encodeURIComponent(cfg.usersTab + '!A:A')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, { method: 'POST', body: JSON.stringify({ values: [row] }) });
+    }
+  }
+
+  // ---------------- Permissions modal ----------------
+  function openPermissions() {
+    if (!usersColIdx) {
+      showToast(`Add a "${cfg.usersTab}" tab with headers Email, Role, AddedAt to enable this.`);
+      return;
+    }
+    renderPermissionsList();
+    $('#permissionsOverlay').classList.add('show');
+  }
+  $('#permClose') && $('#permClose').addEventListener('click', () => $('#permissionsOverlay').classList.remove('show'));
+  function renderPermissionsList() {
+    const list = $('#permList');
+    const rows = [{ email: MASTER_ADMIN_EMAIL, role: 'admin', locked: true }].concat(
+      users.filter(u => u.email !== MASTER_ADMIN_EMAIL).map(u => ({ email: u.email, role: u.role, locked: false }))
+    );
+    list.innerHTML = rows.map(u => `
+      <div class="directory-row" style="grid-template-columns: 1fr auto auto; cursor:default;">
+        <div class="name">${escapeHtml(u.email)}</div>
+        <div class="co">${escapeHtml(u.role)}</div>
+        <div>${u.locked ? '' : `<button type="button" class="btn-link" data-remove-user="${escapeHtml(u.email)}">remove</button>`}</div>
+      </div>`).join('');
+    list.querySelectorAll('[data-remove-user]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const email = btn.dataset.removeUser;
+        try { await upsertUser(email, 'removed'); showToast('Removed.'); await refresh(); renderPermissionsList(); }
+        catch (e) { showToast("Couldn't update — try again."); }
+      });
+    });
+  }
+  $('#permAddBtn') && $('#permAddBtn').addEventListener('click', async () => {
+    const email = $('#perm-email').value.trim();
+    const role = $('#perm-role').value;
+    if (!email) { showToast('Enter an email.'); return; }
+    try { await upsertUser(email, role); showToast('Updated.'); $('#perm-email').value = ''; await refresh(); renderPermissionsList(); }
+    catch (e) { showToast("Couldn't update — try again."); }
+  });
 
   // ---------------- Nav ----------------
   $('#navRoot').querySelectorAll('.nav-btn').forEach(btn => {
@@ -852,11 +1069,33 @@
   function renderCompanyPage() {
     const name = currentCompany;
     const list = contacts.filter(c => (c.company.trim() || '(No company)') === name).sort((a,b) => a.name.localeCompare(b.name));
+    const co = companiesByName[name.trim().toLowerCase()];
     let html = `<button class="back-link" id="backToCompanies">← All companies</button>
-      <div class="contact-header"><h2>${escapeHtml(name)}</h2></div>
-      <div id="companyContactList"></div>`;
+      <div class="contact-header"><h2>${escapeHtml(name)}</h2></div>`;
+    if (companiesColIdx) {
+      if (isAdmin) {
+        html += `<div class="panel" style="margin-bottom:18px;">
+          <label for="co-address">Address</label><input id="co-address" value="${escapeHtml(co ? co.address : '')}">
+          <label for="co-notes">Notes</label><textarea id="co-notes">${escapeHtml(co ? co.notes : '')}</textarea>
+          <button class="btn-secondary" id="coSave" style="width:auto;">Save company info</button>
+        </div>`;
+      } else if (co && (co.address || co.notes)) {
+        html += `<div class="contact-fields" style="margin-bottom:18px;">
+          ${co.address ? `<div><span class="l">Address</span>${escapeHtml(co.address)}</div>` : ''}
+          ${co.notes ? `<div><span class="l">Notes</span>${escapeHtml(co.notes)}</div>` : ''}
+        </div>`;
+      }
+    }
+    html += `<div id="companyContactList"></div>`;
     viewRoot.innerHTML = html;
     $('#backToCompanies').addEventListener('click', () => { currentView = 'companies'; setActiveNav(); render(); });
+    if (isAdmin && companiesColIdx) {
+      $('#coSave').addEventListener('click', async () => {
+        const btn = $('#coSave'); btn.disabled = true; btn.textContent = 'Saving…';
+        try { await upsertCompany(name, $('#co-address').value.trim(), $('#co-notes').value.trim()); showToast('Company info saved.'); await refresh(); openCompany(name); }
+        catch (e) { console.error(e); showToast("Couldn't save — try again."); btn.disabled = false; btn.textContent = 'Save company info'; }
+      });
+    }
     const listEl = $('#companyContactList');
     listEl.innerHTML = list.map(c => `<div class="directory-row" data-open="${escapeHtml(c.contactId)}">
         <div><div class="name">${escapeHtml(c.name)}</div><div class="co">${escapeHtml(c.email || c.phone || '')}</div></div>
@@ -876,6 +1115,7 @@
           <h2>${escapeHtml(c.name)}</h2>
           <div class="contact-meta">${escapeHtml(c.company)}${c.tags ? ' · ' + escapeHtml(c.tags) : ''}</div>
         </div>
+        ${isAdmin ? `<button class="btn-secondary" id="editContactBtn" style="width:auto;">Edit</button>` : ''}
       </div>
       <div class="contact-fields">
         <div><span class="l">Email</span>${escapeHtml(c.email) || '—'}</div>
@@ -888,6 +1128,7 @@
       <div id="contactHistory"></div>`;
     viewRoot.innerHTML = html;
     $('#backToContacts').addEventListener('click', () => { currentView='contacts'; setActiveNav(); render(); });
+    if (isAdmin) $('#editContactBtn').addEventListener('click', () => openEditContact(c));
     $('#logForThisContact').addEventListener('click', () => { selectContact(c.contactId); window.scrollTo({top:0, behavior:'smooth'}); });
     const histEl = $('#contactHistory');
     if (!history.length) { histEl.innerHTML = '<div class="empty">No interactions logged yet.</div>'; return; }
