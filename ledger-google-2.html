@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://sheets.googleapis.com https://www.googleapis.com https://oauth2.googleapis.com https://content-sheets.googleapis.com; frame-src https://accounts.google.com https://content.googleapis.com https://docs.google.com; img-src 'self' data: https://*.googleusercontent.com;">
+<title>The Ledger — Team Networking Log (Google Sheets)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js"></script>
+<style>
+  :root {
+    --paper: #EFF1E9; --paper-dim: #E4E7D9; --paper-deep: #D9DCCB;
+    --ink: #1C2620; --ink-soft: #57624F; --ink-faint: #8A9483;
+    --teal: #2F6F63; --teal-deep: #235349;
+    --amber: #B4791F; --amber-bg: #F3E4C9;
+    --wine: #A3384A; --wine-bg: #F1DBDD;
+    --line: #C9CDBB; --white: #FBFBF7;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--paper); color: var(--ink);
+    font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+    font-size: 15px; line-height: 1.5; min-height: 100vh;
+  }
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 28px 24px 80px; }
+
+  header.top {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    gap: 20px; border-bottom: 2px solid var(--ink); padding-bottom: 16px;
+    margin-bottom: 6px; flex-wrap: wrap;
+  }
+  .brand h1 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 34px; letter-spacing: -0.01em; margin: 0 0 4px; }
+  .brand p { margin: 0; color: var(--ink-soft); font-size: 14px; max-width: 44ch; }
+  .viewer { display: flex; align-items: center; gap: 12px; font-size: 13.5px; color: var(--ink-soft); white-space: nowrap; }
+  .viewer img { width: 26px; height: 26px; border-radius: 50%; }
+  .viewer strong { color: var(--ink); font-weight: 600; }
+  .icon-btn {
+    background: none; border: 1px solid var(--line); border-radius: 4px;
+    padding: 6px 10px; font-size: 12.5px; color: var(--ink-soft); cursor: pointer;
+  }
+  .icon-btn:hover { border-color: var(--ink-soft); color: var(--ink); }
+
+  .banner { background: var(--white); border: 1px solid var(--line); border-radius: 3px; padding: 16px 18px; margin: 20px 0; font-size: 14px; color: var(--ink-soft); }
+  .banner.warn { border-color: var(--amber); background: var(--amber-bg); color: #6b4c14; }
+  .banner.error { border-color: var(--wine); background: var(--wine-bg); color: #6e2430; }
+
+  .stats { display: flex; gap: 0; margin: 22px 0 30px; border-bottom: 1px solid var(--line); padding-bottom: 20px; flex-wrap: wrap; }
+  .stat { padding: 0 26px; border-left: 1px solid var(--line); }
+  .stat:first-child { border-left: none; padding-left: 0; }
+  .stat .n { font-family: 'Fraunces', serif; font-weight: 600; font-size: 30px; line-height: 1; display: block; }
+  .stat .l { color: var(--ink-soft); font-size: 12.5px; margin-top: 4px; display: block; }
+  .stat.warn .n { color: var(--amber); }
+  .stat.danger .n { color: var(--wine); }
+
+  .grid { display: grid; grid-template-columns: 300px 1fr; gap: 40px; align-items: start; }
+  @media (max-width: 780px) { .grid { grid-template-columns: 1fr; } }
+
+  .panel { background: var(--white); border: 1px solid var(--line); border-radius: 3px; padding: 20px; margin-bottom: 24px; }
+  .panel h2 { font-family: 'Fraunces', serif; font-style: italic; font-weight: 500; font-size: 18px; margin: 0 0 16px; color: var(--teal-deep); }
+  label { display: block; font-size: 12px; color: var(--ink-soft); margin: 14px 0 5px; }
+  label:first-of-type { margin-top: 0; }
+  input, select, textarea {
+    width: 100%; background: var(--paper); border: 1px solid var(--line); border-radius: 2px;
+    padding: 8px 9px; font-family: inherit; font-size: 14px; color: var(--ink);
+  }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--teal); outline-offset: 1px; }
+  textarea { resize: vertical; min-height: 56px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .hint { font-size: 11.5px; color: var(--ink-faint); margin-top: 3px; }
+
+  button { font-family: inherit; cursor: pointer; border: none; }
+  .btn-primary { width: 100%; background: var(--teal); color: var(--white); padding: 10px 14px; border-radius: 2px; font-size: 14px; font-weight: 600; margin-top: 16px; }
+  .btn-primary:hover { background: var(--teal-deep); }
+  .btn-primary:disabled { opacity: 0.55; cursor: default; }
+  .btn-secondary { background: var(--paper-deep); color: var(--ink); padding: 9px 14px; border-radius: 2px; font-size: 13.5px; margin-top: 10px; width: 100%; }
+
+  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .chip { font-size: 12px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--paper); color: var(--ink-soft); cursor: pointer; }
+  .chip.active { background: var(--teal); border-color: var(--teal); color: var(--white); }
+
+  .tabs { display: flex; gap: 22px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
+  .tab { background: none; padding: 8px 0 12px; font-size: 15px; color: var(--ink-soft); border-bottom: 2px solid transparent; }
+  .tab.active { color: var(--ink); border-bottom-color: var(--ink); font-weight: 600; }
+  .tab .count { display: inline-block; margin-left: 6px; font-size: 11.5px; background: var(--paper-deep); color: var(--ink-soft); border-radius: 999px; padding: 1px 7px; }
+  .tab.active .count { background: var(--ink); color: var(--white); }
+
+  .day-heading { font-family: 'Fraunces', serif; font-style: italic; color: var(--ink-faint); font-size: 13.5px; margin: 26px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
+  .day-heading:first-child { margin-top: 0; }
+
+  .entry { display: grid; grid-template-columns: 90px 1fr auto; gap: 16px; padding: 13px 4px; border-bottom: 1px solid var(--paper-deep); align-items: start; }
+  .entry:hover { background: var(--paper-dim); }
+  .entry .type-tag { font-size: 11px; text-transform: lowercase; color: var(--teal-deep); border: 1px solid var(--teal); border-radius: 999px; padding: 3px 9px; justify-self: start; white-space: nowrap; margin-top: 2px; }
+  .entry .main .who { font-weight: 600; font-size: 15px; }
+  .entry .main .co { color: var(--ink-soft); font-size: 13.5px; }
+  .entry .main .note { margin-top: 4px; font-size: 13.5px; color: var(--ink); }
+  .entry .meta { text-align: right; font-size: 12px; color: var(--ink-faint); white-space: nowrap; }
+  .followup-badge { display: inline-block; margin-top: 6px; font-size: 11.5px; padding: 3px 8px; border-radius: 3px; }
+  .followup-badge.upcoming { background: var(--amber-bg); color: var(--amber); }
+  .followup-badge.overdue { background: var(--wine-bg); color: var(--wine); }
+  .followup-badge.done { background: var(--paper-deep); color: var(--ink-faint); }
+  .done-toggle { font-size: 11.5px; background: none; color: var(--teal); text-decoration: underline; padding: 0; margin-top: 4px; display: block; }
+
+  .empty { padding: 50px 10px; text-align: center; color: var(--ink-faint); }
+  .empty .big { font-family: 'Fraunces', serif; font-style: italic; font-size: 19px; color: var(--ink-soft); display: block; margin-bottom: 6px; }
+
+  .toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 9px 18px; border-radius: 4px; font-size: 13.5px; opacity: 0; transition: opacity 0.25s; pointer-events: none; z-index: 50; }
+  .toast.show { opacity: 1; }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: var(--white); border-radius: 4px; padding: 26px; max-width: 480px; width: 100%; max-height: 88vh; overflow-y: auto; }
+  .modal h2 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 20px; margin: 0 0 6px; }
+  .modal p.sub { color: var(--ink-soft); font-size: 13.5px; margin: 0 0 18px; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+  .modal-actions .btn-secondary, .modal-actions .btn-primary { margin-top: 0; }
+  .connected-file { background: var(--paper); border: 1px solid var(--line); border-radius: 3px; padding: 10px 12px; font-size: 13px; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>The Ledger</h1>
+      <p>A shared record of every outreach, intro and follow-up — read and written straight to your team's Google Sheet.</p>
+    </div>
+    <div class="viewer" id="viewerBox">
+      <button class="icon-btn" id="settingsBtn">Settings</button>
+    </div>
+  </header>
+
+  <div id="bannerRoot"></div>
+
+  <div class="stats" id="statsRow">
+    <div class="stat"><span class="n">–</span><span class="l">logged this week</span></div>
+    <div class="stat"><span class="n">–</span><span class="l">contacts touched</span></div>
+    <div class="stat warn"><span class="n">–</span><span class="l">follow-ups due soon</span></div>
+    <div class="stat danger"><span class="n">–</span><span class="l">follow-ups overdue</span></div>
+  </div>
+
+  <div class="grid">
+    <div>
+      <div class="panel">
+        <h2>Log an activity</h2>
+        <form id="entryForm">
+          <label for="f-contact">Contact name</label>
+          <input id="f-contact" required placeholder="e.g. Priya Shah">
+          <label for="f-company">Company / context</label>
+          <input id="f-company" placeholder="e.g. Meridian Capital">
+          <div class="row2">
+            <div>
+              <label for="f-type">Type</label>
+              <select id="f-type">
+                <option value="coffee">Coffee / meetup</option>
+                <option value="call">Call</option>
+                <option value="event">Event</option>
+                <option value="intro">Introduction</option>
+                <option value="email">Email</option>
+                <option value="linkedin">LinkedIn / social</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label for="f-date">Date</label>
+              <input id="f-date" type="date">
+            </div>
+          </div>
+          <label for="f-notes">Notes</label>
+          <textarea id="f-notes" placeholder="What was discussed, what came of it…"></textarea>
+          <label for="f-followup">Follow up on (optional)</label>
+          <input id="f-followup" type="date">
+          <button type="submit" class="btn-primary" id="submitBtn" disabled>Connect a sheet first</button>
+        </form>
+      </div>
+
+      <div class="panel" id="filterPanel">
+        <h2>Filter the feed</h2>
+        <div>
+          <label>Teammate</label>
+          <div class="chip-row" id="authorChips"><span class="chip active" data-author="">Everyone</span></div>
+        </div>
+        <div>
+          <label>Type</label>
+          <div class="chip-row" id="typeChips"></div>
+        </div>
+        <button class="btn-secondary" id="refreshBtn">Refresh from Sheet</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="tabs">
+        <button class="tab active" data-tab="feed">Feed</button>
+        <button class="tab" data-tab="followups">Follow-ups<span class="count" id="followupCount">0</span></button>
+      </div>
+      <div id="feedRoot"><div class="empty"><span class="big">Not connected yet</span>Open Settings to connect this page to your Google Sheet.</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-overlay" id="settingsOverlay">
+  <div class="modal">
+    <h2>Connect to Google Sheets</h2>
+    <p class="sub">One-time setup. See the setup guide for how to get these values.</p>
+    <label for="s-client">OAuth Client ID</label>
+    <input id="s-client" placeholder="xxxxxxxx.apps.googleusercontent.com">
+    <label for="s-apikey">API key</label>
+    <input id="s-apikey" placeholder="AIza...">
+    <label for="s-sheetname">Tab name in the Sheet</label>
+    <input id="s-sheetname" placeholder="ActivityLog" value="ActivityLog">
+    <div id="fileStatus"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="settingsCancel">Cancel</button>
+      <button class="btn-primary" id="settingsConnect">Connect & choose file</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const TYPE_LABELS = { coffee:'coffee', call:'call', event:'event', intro:'intro', email:'email', linkedin:'social', other:'other' };
+  const REQUIRED_COLUMNS = ['Date','Type','Contact','Company','Notes','FollowUpDate','FollowUpDone','LoggedBy'];
+  const SCOPE = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile';
+
+  let cfg = loadConfig();
+  let tokenClient = null;
+  let accessToken = null;
+  let me = { name: '', picture: '' };
+  let columnIndex = {};
+  let rows = [];
+  let activeTab = 'feed';
+  let filterAuthor = '';
+  let activeTypeFilters = new Set();
+  let pickerLoaded = false;
+
+  const $ = (sel) => document.querySelector(sel);
+  const feedRoot = $('#feedRoot');
+  const bannerRoot = $('#bannerRoot');
+
+  function loadConfig() {
+    try { return JSON.parse(localStorage.getItem('ledgerGoogleConfig') || '{}'); } catch (e) { return {}; }
+  }
+  function saveConfig() { try { localStorage.setItem('ledgerGoogleConfig', JSON.stringify(cfg)); } catch (e) {} }
+
+  function showToast(msg) {
+    const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2600);
+  }
+  function showBanner(msg, kind) { bannerRoot.innerHTML = `<div class="banner ${kind||''}">${msg}</div>`; }
+  function clearBanner() { bannerRoot.innerHTML = ''; }
+
+  function todayISO() { return new Date().toISOString().slice(0,10); }
+  function fmtDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso + 'T00:00:00');
+    if (isNaN(d)) return iso;
+    return d.toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
+  }
+  function daysFromToday(iso) {
+    const today = new Date(todayISO() + 'T00:00:00');
+    const d = new Date(iso + 'T00:00:00');
+    return Math.round((d - today) / 86400000);
+  }
+  function escapeHtml(s) {
+    return (s || '').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function colToLetter(n) {
+    let s = '';
+    n = n + 1;
+    while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); }
+    return s;
+  }
+
+  $('#f-date').value = todayISO();
+
+  // ---------------- Settings ----------------
+  function openSettings() {
+    $('#s-client').value = cfg.clientId || '';
+    $('#s-apikey').value = cfg.apiKey || '';
+    $('#s-sheetname').value = cfg.sheetName || 'ActivityLog';
+    $('#fileStatus').innerHTML = cfg.fileName ? `<div class="connected-file">Connected file: <strong>${escapeHtml(cfg.fileName)}</strong></div>` : '';
+    $('#settingsOverlay').classList.add('show');
+  }
+  function closeSettings() { $('#settingsOverlay').classList.remove('show'); }
+  $('#settingsBtn').addEventListener('click', openSettings);
+  $('#settingsCancel').addEventListener('click', closeSettings);
+  $('#settingsConnect').addEventListener('click', async () => {
+    const clientId = $('#s-client').value.trim();
+    const apiKey = $('#s-apikey').value.trim();
+    const sheetName = $('#s-sheetname').value.trim() || 'ActivityLog';
+    if (!clientId || !apiKey) { showToast('Client ID and API key are both required.'); return; }
+    cfg = Object.assign({}, cfg, { clientId, apiKey, sheetName });
+    saveConfig();
+    await authenticate();
+    if (accessToken) await pickFile();
+  });
+
+  function waitFor(checkFn, timeoutMs, intervalMs) {
+    timeoutMs = timeoutMs || 8000; intervalMs = intervalMs || 100;
+    return new Promise((resolve, reject) => {
+      const start = Date.now();
+      (function poll() {
+        try { if (checkFn()) return resolve(); } catch (e) {}
+        if (Date.now() - start > timeoutMs) return reject(new Error('Google\'s sign-in script hasn\'t loaded yet — check your connection and try again.'));
+        setTimeout(poll, intervalMs);
+      })();
+    });
+  }
+
+  // ---------------- Auth ----------------
+  function authenticate() {
+    return new Promise(async (resolve) => {
+      try {
+        await waitFor(() => window.google && google.accounts && google.accounts.oauth2);
+      } catch (waitErr) {
+        showBanner(escapeHtml(waitErr.message), 'error');
+        resolve();
+        return;
+      }
+      try {
+        tokenClient = google.accounts.oauth2.initTokenClient({
+          client_id: cfg.clientId,
+          scope: SCOPE,
+          callback: async (resp) => {
+            if (resp.error) { showBanner('Sign-in failed: ' + escapeHtml(resp.error), 'error'); resolve(); return; }
+            accessToken = resp.access_token;
+            await loadProfile();
+            resolve();
+          }
+        });
+        tokenClient.requestAccessToken({ prompt: '' });
+      } catch (err) {
+        showBanner("Couldn't start Google sign-in: " + escapeHtml(err.message), 'error');
+        resolve();
+      }
+    });
+  }
+
+  async function loadProfile() {
+    try {
+      const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: 'Bearer ' + accessToken } });
+      const data = await res.json();
+      me.name = data.name || data.email || '';
+      me.picture = data.picture || '';
+      renderViewer();
+    } catch (e) { /* leave defaults */ }
+  }
+
+  function renderViewer() {
+    const box = $('#viewerBox');
+    if (me.name) {
+      box.innerHTML = `${me.picture ? `<img src="${me.picture}" alt="">` : ''}<span>Signed in as <strong>${escapeHtml(me.name)}</strong></span><button class="icon-btn" id="settingsBtn">Settings</button>`;
+    } else {
+      box.innerHTML = `<button class="icon-btn" id="settingsBtn">Settings</button>`;
+    }
+    $('#settingsBtn').addEventListener('click', openSettings);
+  }
+
+  // ---------------- Picker ----------------
+  async function loadPicker() {
+    if (pickerLoaded) return;
+    await waitFor(() => window.gapi && typeof gapi.load === 'function');
+    return new Promise((resolve) => { gapi.load('picker', () => { pickerLoaded = true; resolve(); }); });
+  }
+
+  async function pickFile() {
+    await loadPicker();
+    const view = new google.picker.DocsView(google.picker.ViewId.SPREADSHEETS)
+      .setMode(google.picker.DocsViewMode.LIST);
+    const picker = new google.picker.PickerBuilder()
+      .addView(view)
+      .setOAuthToken(accessToken)
+      .setDeveloperKey(cfg.apiKey)
+      .setCallback(async (data) => {
+        if (data.action === google.picker.Action.PICKED) {
+          const doc = data.docs[0];
+          cfg.spreadsheetId = doc.id;
+          cfg.fileName = doc.name;
+          saveConfig();
+          closeSettings();
+          clearBanner();
+          $('#submitBtn').disabled = false;
+          $('#submitBtn').textContent = 'Add to the ledger';
+          await loadColumns();
+          await refresh();
+        }
+      })
+      .build();
+    picker.setVisible(true);
+  }
+
+  // ---------------- Sheets API ----------------
+  async function sheetsFetch(path, options) {
+    if (!accessToken) throw new Error('Not signed in.');
+    const res = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + cfg.spreadsheetId + path, Object.assign({
+      headers: Object.assign({ Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' }, (options && options.headers) || {})
+    }, options || {}));
+    if (res.status === 401) {
+      // token expired — re-auth silently then let caller retry
+      await authenticate();
+      throw new Error('Session expired — please try again.');
+    }
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(`Sheets API ${res.status}: ${text.slice(0,200)}`);
+    }
+    return res.json();
+  }
+
+  async function loadColumns() {
+    const range = encodeURIComponent(`${cfg.sheetName}!1:1`);
+    const data = await sheetsFetch(`/values/${range}`);
+    const header = (data.values && data.values[0]) || [];
+    columnIndex = {};
+    header.forEach((name, i) => { columnIndex[name.trim()] = i; });
+    const missing = REQUIRED_COLUMNS.filter(c => !(c in columnIndex));
+    if (missing.length) {
+      showBanner(`The "${escapeHtml(cfg.sheetName)}" tab is missing column(s): ${missing.join(', ')}. Add them as headers, then refresh.`, 'warn');
+    }
+  }
+
+  function normalizeDate(v) {
+    if (!v) return '';
+    if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) return v.slice(0,10);
+    const d = new Date(v);
+    if (!isNaN(d)) return d.toISOString().slice(0,10);
+    return String(v);
+  }
+
+  function rowToObject(sheetRowNumber, values) {
+    const get = (name) => (name in columnIndex) ? (values[columnIndex[name]] || '') : '';
+    const done = get('FollowUpDone');
+    return {
+      sheetRow: sheetRowNumber,
+      date: normalizeDate(get('Date')),
+      type: (get('Type') || 'other').toString().toLowerCase(),
+      contactName: get('Contact') || '',
+      company: get('Company') || '',
+      notes: get('Notes') || '',
+      followUpDate: normalizeDate(get('FollowUpDate')),
+      followUpDone: done.toString().toLowerCase() === 'true',
+      loggedBy: get('LoggedBy') || ''
+    };
+  }
+
+  async function refresh() {
+    feedRoot.innerHTML = '<div class="empty">Reading the sheet…</div>';
+    try {
+      const range = encodeURIComponent(`${cfg.sheetName}!A2:Z`);
+      const data = await sheetsFetch(`/values/${range}`);
+      const values = data.values || [];
+      rows = values.map((v, i) => rowToObject(i + 2, v)).filter(r => r.contactName || r.date);
+      renderAuthorChips();
+      render();
+    } catch (err) {
+      console.error(err);
+      feedRoot.innerHTML = `<div class="empty"><span class="big">Couldn't read the sheet</span>${escapeHtml(err.message)}</div>`;
+    }
+  }
+  $('#refreshBtn').addEventListener('click', refresh);
+
+  // ---------------- Filters ----------------
+  (function buildTypeChips() {
+    const wrap = $('#typeChips');
+    Object.entries(TYPE_LABELS).forEach(([key,label]) => {
+      const chip = document.createElement('span');
+      chip.className = 'chip'; chip.textContent = label; chip.dataset.type = key;
+      chip.addEventListener('click', () => {
+        if (activeTypeFilters.has(key)) activeTypeFilters.delete(key); else activeTypeFilters.add(key);
+        chip.classList.toggle('active'); render();
+      });
+      wrap.appendChild(chip);
+    });
+  })();
+
+  function renderAuthorChips() {
+    const wrap = $('#authorChips');
+    wrap.querySelectorAll('[data-author]:not([data-author=""])').forEach(c => c.remove());
+    const names = [...new Set(rows.map(r => r.loggedBy).filter(Boolean))].sort();
+    names.forEach(name => {
+      const chip = document.createElement('span');
+      chip.className = 'chip'; chip.textContent = name; chip.dataset.author = name;
+      chip.addEventListener('click', () => {
+        filterAuthor = (filterAuthor === name) ? '' : name;
+        [...wrap.children].forEach(c => c.classList.toggle('active', c.dataset.author === filterAuthor));
+        render();
+      });
+      wrap.appendChild(chip);
+    });
+    const everyone = wrap.querySelector('[data-author=""]');
+    everyone.onclick = () => {
+      filterAuthor = '';
+      [...wrap.children].forEach(c => c.classList.toggle('active', c.dataset.author === ''));
+      render();
+    };
+  }
+
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      activeTab = tab.dataset.tab;
+      render();
+    });
+  });
+
+  // ---------------- Render ----------------
+  function render() {
+    renderStats();
+    if (activeTab === 'feed') renderFeed(); else renderFollowups();
+  }
+
+  function renderStats() {
+    const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+    const weekAgoISO = weekAgo.toISOString().slice(0,10);
+    const thisWeek = rows.filter(r => r.date >= weekAgoISO).length;
+    const contacts = new Set(rows.map(r => r.contactName.toLowerCase().trim()).filter(Boolean)).size;
+    const dueSoon = rows.filter(r => r.followUpDate && !r.followUpDone && daysFromToday(r.followUpDate) >= 0 && daysFromToday(r.followUpDate) <= 7).length;
+    const overdue = rows.filter(r => r.followUpDate && !r.followUpDone && daysFromToday(r.followUpDate) < 0).length;
+    $('#followupCount').textContent = dueSoon + overdue;
+    const nums = document.querySelectorAll('.stats .n');
+    nums[0].textContent = thisWeek; nums[1].textContent = contacts; nums[2].textContent = dueSoon; nums[3].textContent = overdue;
+  }
+
+  function applyFilters(list) {
+    return list.filter(r => {
+      if (filterAuthor && r.loggedBy !== filterAuthor) return false;
+      if (activeTypeFilters.size && !activeTypeFilters.has(r.type)) return false;
+      return true;
+    });
+  }
+
+  function renderFeed() {
+    const list = applyFilters([...rows].sort((a,b) => b.date.localeCompare(a.date)));
+    if (!list.length) { feedRoot.innerHTML = '<div class="empty"><span class="big">Nothing logged yet</span>Be the first to add an entry on the left.</div>'; return; }
+    let html = ''; let lastDate = null;
+    list.forEach(r => {
+      if (r.date !== lastDate) { html += `<div class="day-heading">${fmtDate(r.date)}</div>`; lastDate = r.date; }
+      html += entryHtml(r);
+    });
+    feedRoot.innerHTML = html;
+    wireEntryActions();
+  }
+
+  function renderFollowups() {
+    const pending = rows.filter(r => r.followUpDate && !r.followUpDone).sort((a,b) => a.followUpDate.localeCompare(b.followUpDate));
+    const list = applyFilters(pending);
+    if (!list.length) { feedRoot.innerHTML = '<div class="empty"><span class="big">No open follow-ups</span>Anything you flag for follow-up will show up here.</div>'; return; }
+    let html = ''; let lastDate = null;
+    list.forEach(r => {
+      if (r.followUpDate !== lastDate) {
+        const d = daysFromToday(r.followUpDate);
+        const label = d < 0 ? `${fmtDate(r.followUpDate)} — overdue` : d === 0 ? `${fmtDate(r.followUpDate)} — today` : fmtDate(r.followUpDate);
+        html += `<div class="day-heading">${label}</div>`; lastDate = r.followUpDate;
+      }
+      html += entryHtml(r, true);
+    });
+    feedRoot.innerHTML = html;
+    wireEntryActions();
+  }
+
+  function followupBadge(r) {
+    if (!r.followUpDate) return '';
+    if (r.followUpDone) return `<span class="followup-badge done">followed up</span>`;
+    const d = daysFromToday(r.followUpDate);
+    if (d < 0) return `<span class="followup-badge overdue">follow up — was due ${fmtDate(r.followUpDate)}</span>`;
+    if (d === 0) return `<span class="followup-badge upcoming">follow up today</span>`;
+    return `<span class="followup-badge upcoming">follow up by ${fmtDate(r.followUpDate)}</span>`;
+  }
+
+  function entryHtml(r, showToggle) {
+    const toggle = (showToggle && !r.followUpDone) ? `<button class="done-toggle" data-done="${r.sheetRow}">Mark followed up</button>` : '';
+    return `
+      <div class="entry">
+        <span class="type-tag">${TYPE_LABELS[r.type] || 'other'}</span>
+        <div class="main">
+          <div class="who">${escapeHtml(r.contactName || 'Unnamed contact')}</div>
+          ${r.company ? `<div class="co">${escapeHtml(r.company)}</div>` : ''}
+          ${r.notes ? `<div class="note">${escapeHtml(r.notes)}</div>` : ''}
+          ${followupBadge(r)}
+          ${toggle}
+        </div>
+        <div class="meta">
+          <div>${escapeHtml(r.loggedBy || 'Unknown')}</div>
+          <div>${fmtDate(r.date)}</div>
+        </div>
+      </div>`;
+  }
+
+  function wireEntryActions() {
+    feedRoot.querySelectorAll('[data-done]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const sheetRow = Number(btn.dataset.done);
+        btn.disabled = true;
+        try {
+          const col = colToLetter(columnIndex['FollowUpDone']);
+          const range = encodeURIComponent(`${cfg.sheetName}!${col}${sheetRow}`);
+          await sheetsFetch(`/values/${range}?valueInputOption=RAW`, {
+            method: 'PUT',
+            body: JSON.stringify({ values: [['TRUE']] })
+          });
+          showToast('Marked as followed up.');
+          await refresh();
+        } catch (e) {
+          console.error(e);
+          showToast("Couldn't update the sheet — try again.");
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
+  function buildRowValues(fields) {
+    const width = Math.max(...Object.values(columnIndex)) + 1;
+    const arr = new Array(width).fill('');
+    const set = (name, val) => { if (name in columnIndex) arr[columnIndex[name]] = val; };
+    set('Date', fields.date);
+    set('Type', fields.type);
+    set('Contact', fields.contactName);
+    set('Company', fields.company);
+    set('Notes', fields.notes);
+    set('FollowUpDate', fields.followUpDate || '');
+    set('FollowUpDone', fields.followUpDone ? 'TRUE' : 'FALSE');
+    set('LoggedBy', fields.loggedBy);
+    return arr;
+  }
+
+  // ---------------- Add entry ----------------
+  $('#entryForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!accessToken || !cfg.spreadsheetId) { showToast('Connect a sheet first via Settings.'); return; }
+    const contact = $('#f-contact').value.trim();
+    if (!contact) return;
+    const btn = $('#submitBtn');
+    btn.disabled = true; btn.textContent = 'Adding…';
+
+    const fields = {
+      date: $('#f-date').value || todayISO(),
+      type: $('#f-type').value,
+      contactName: contact,
+      company: $('#f-company').value.trim(),
+      notes: $('#f-notes').value.trim(),
+      followUpDate: $('#f-followup').value || '',
+      followUpDone: false,
+      loggedBy: me.name || ''
+    };
+
+    try {
+      const values = buildRowValues(fields);
+      const range = encodeURIComponent(`${cfg.sheetName}!A:A`);
+      await sheetsFetch(`/values/${range}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, {
+        method: 'POST',
+        body: JSON.stringify({ values: [values] })
+      });
+      showToast('Added to the ledger.');
+      $('#entryForm').reset();
+      $('#f-date').value = todayISO();
+      $('#f-type').value = 'coffee';
+      await refresh();
+    } catch (err) {
+      console.error(err);
+      showToast("Couldn't save to the sheet — check Settings and try again.");
+    } finally {
+      btn.disabled = false; btn.textContent = 'Add to the ledger';
+    }
+  });
+
+  // ---------------- Boot ----------------
+  window.addEventListener('load', async () => {
+    if (cfg.clientId && cfg.apiKey && cfg.spreadsheetId) {
+      await authenticate();
+      if (accessToken) {
+        $('#submitBtn').disabled = false;
+        $('#submitBtn').textContent = 'Add to the ledger';
+        await loadColumns();
+        await refresh();
+      }
+    } else {
+      openSettings();
+    }
+  });
+})();
+</script>
+</body>
+</html>
