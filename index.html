@@ -334,6 +334,7 @@
           scope: SCOPE,
           callback: async (resp) => {
             if (resp.error) { showBanner('Sign-in failed: ' + escapeHtml(resp.error), 'error'); return; }
+            console.log('Granted scopes:', resp.scope);
             accessToken = resp.access_token;
             await loadProfile();
             if (pendingAction === 'setup') {
@@ -374,7 +375,7 @@
       showToast("Still loading Google's sign-in — try again in a second.");
       return;
     }
-    tokenClient.requestAccessToken({ prompt: '' });
+    tokenClient.requestAccessToken({ prompt: action === 'setup' ? 'consent' : '' });
   }
 
   async function loadProfile() {
