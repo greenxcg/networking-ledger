@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://sheets.googleapis.com https://www.googleapis.com https://oauth2.googleapis.com https://content-sheets.googleapis.com; frame-src https://accounts.google.com https://content.googleapis.com https://docs.google.com; img-src 'self' data: https://*.googleusercontent.com;">
-<title>The Ledger — Team Networking Log (Google Sheets)</title>
+<title>The Ledger — Networking CRM</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -21,52 +21,43 @@
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
-  body {
-    background: var(--paper); color: var(--ink);
-    font-family: 'IBM Plex Sans', -apple-system, sans-serif;
-    font-size: 15px; line-height: 1.5; min-height: 100vh;
-  }
-  .wrap { max-width: 1160px; margin: 0 auto; padding: 28px 24px 80px; }
+  body { background: var(--paper); color: var(--ink); font-family: 'IBM Plex Sans', -apple-system, sans-serif; font-size: 15px; line-height: 1.5; min-height: 100vh; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 28px 24px 80px; }
 
-  header.top {
-    display: flex; justify-content: space-between; align-items: flex-end;
-    gap: 20px; border-bottom: 2px solid var(--ink); padding-bottom: 16px;
-    margin-bottom: 6px; flex-wrap: wrap;
-  }
+  header.top { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; border-bottom: 2px solid var(--ink); padding-bottom: 16px; margin-bottom: 6px; flex-wrap: wrap; }
   .brand h1 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 34px; letter-spacing: -0.01em; margin: 0 0 4px; }
-  .brand p { margin: 0; color: var(--ink-soft); font-size: 14px; max-width: 44ch; }
+  .brand p { margin: 0; color: var(--ink-soft); font-size: 14px; max-width: 48ch; }
   .viewer { display: flex; align-items: center; gap: 12px; font-size: 13.5px; color: var(--ink-soft); white-space: nowrap; }
   .viewer img { width: 26px; height: 26px; border-radius: 50%; }
   .viewer strong { color: var(--ink); font-weight: 600; }
-  .icon-btn {
-    background: none; border: 1px solid var(--line); border-radius: 4px;
-    padding: 6px 10px; font-size: 12.5px; color: var(--ink-soft); cursor: pointer;
-  }
+  .icon-btn { background: none; border: 1px solid var(--line); border-radius: 4px; padding: 6px 10px; font-size: 12.5px; color: var(--ink-soft); cursor: pointer; }
   .icon-btn:hover { border-color: var(--ink-soft); color: var(--ink); }
 
   .banner { background: var(--white); border: 1px solid var(--line); border-radius: 3px; padding: 16px 18px; margin: 20px 0; font-size: 14px; color: var(--ink-soft); }
   .banner.warn { border-color: var(--amber); background: var(--amber-bg); color: #6b4c14; }
   .banner.error { border-color: var(--wine); background: var(--wine-bg); color: #6e2430; }
 
-  .stats { display: flex; gap: 0; margin: 22px 0 30px; border-bottom: 1px solid var(--line); padding-bottom: 20px; flex-wrap: wrap; }
+  .stats { display: flex; gap: 0; margin: 22px 0 26px; border-bottom: 1px solid var(--line); padding-bottom: 20px; flex-wrap: wrap; }
   .stat { padding: 0 26px; border-left: 1px solid var(--line); }
   .stat:first-child { border-left: none; padding-left: 0; }
   .stat .n { font-family: 'Fraunces', serif; font-weight: 600; font-size: 30px; line-height: 1; display: block; }
   .stat .l { color: var(--ink-soft); font-size: 12.5px; margin-top: 4px; display: block; }
-  .stat.warn .n { color: var(--amber); }
-  .stat.danger .n { color: var(--wine); }
+  .stat.warn .n { color: var(--amber); } .stat.danger .n { color: var(--wine); }
 
-  .grid { display: grid; grid-template-columns: 300px 1fr; gap: 40px; align-items: start; }
-  @media (max-width: 780px) { .grid { grid-template-columns: 1fr; } }
+  .nav { display: flex; gap: 22px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
+  .nav-btn { background: none; padding: 8px 0 12px; font-size: 15px; color: var(--ink-soft); border-bottom: 2px solid transparent; cursor: pointer; }
+  .nav-btn.active { color: var(--ink); border-bottom-color: var(--ink); font-weight: 600; }
+  .nav-btn .count { display: inline-block; margin-left: 6px; font-size: 11.5px; background: var(--paper-deep); color: var(--ink-soft); border-radius: 999px; padding: 1px 7px; }
+  .nav-btn.active .count { background: var(--ink); color: var(--white); }
+
+  .grid { display: grid; grid-template-columns: 320px 1fr; gap: 40px; align-items: start; }
+  @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
 
   .panel { background: var(--white); border: 1px solid var(--line); border-radius: 3px; padding: 20px; margin-bottom: 24px; }
   .panel h2 { font-family: 'Fraunces', serif; font-style: italic; font-weight: 500; font-size: 18px; margin: 0 0 16px; color: var(--teal-deep); }
   label { display: block; font-size: 12px; color: var(--ink-soft); margin: 14px 0 5px; }
   label:first-of-type { margin-top: 0; }
-  input, select, textarea {
-    width: 100%; background: var(--paper); border: 1px solid var(--line); border-radius: 2px;
-    padding: 8px 9px; font-family: inherit; font-size: 14px; color: var(--ink);
-  }
+  input, select, textarea { width: 100%; background: var(--paper); border: 1px solid var(--line); border-radius: 2px; padding: 8px 9px; font-family: inherit; font-size: 14px; color: var(--ink); }
   input:focus, select:focus, textarea:focus { outline: 2px solid var(--teal); outline-offset: 1px; }
   textarea { resize: vertical; min-height: 56px; }
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -74,19 +65,22 @@
 
   button { font-family: inherit; cursor: pointer; border: none; }
   .btn-primary { width: 100%; background: var(--teal); color: var(--white); padding: 10px 14px; border-radius: 2px; font-size: 14px; font-weight: 600; margin-top: 16px; }
-  .btn-primary:hover { background: var(--teal-deep); }
-  .btn-primary:disabled { opacity: 0.55; cursor: default; }
+  .btn-primary:hover { background: var(--teal-deep); } .btn-primary:disabled { opacity: 0.55; cursor: default; }
   .btn-secondary { background: var(--paper-deep); color: var(--ink); padding: 9px 14px; border-radius: 2px; font-size: 13.5px; margin-top: 10px; width: 100%; }
+  .btn-link { background: none; color: var(--teal); text-decoration: underline; padding: 0; font-size: 13px; }
 
   .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
   .chip { font-size: 12px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--paper); color: var(--ink-soft); cursor: pointer; }
   .chip.active { background: var(--teal); border-color: var(--teal); color: var(--white); }
 
-  .tabs { display: flex; gap: 22px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
-  .tab { background: none; padding: 8px 0 12px; font-size: 15px; color: var(--ink-soft); border-bottom: 2px solid transparent; }
-  .tab.active { color: var(--ink); border-bottom-color: var(--ink); font-weight: 600; }
-  .tab .count { display: inline-block; margin-left: 6px; font-size: 11.5px; background: var(--paper-deep); color: var(--ink-soft); border-radius: 999px; padding: 1px 7px; }
-  .tab.active .count { background: var(--ink); color: var(--white); }
+  /* Contact picker / typeahead */
+  .picker-wrap { position: relative; }
+  .picker-results { position: absolute; z-index: 20; left: 0; right: 0; top: 100%; background: var(--white); border: 1px solid var(--line); border-radius: 0 0 3px 3px; max-height: 220px; overflow-y: auto; box-shadow: 0 6px 14px rgba(0,0,0,0.08); }
+  .picker-row { padding: 8px 10px; cursor: pointer; font-size: 13.5px; border-bottom: 1px solid var(--paper-dim); }
+  .picker-row:hover { background: var(--paper-dim); }
+  .picker-row .co { color: var(--ink-soft); font-size: 12px; }
+  .picker-row.add-new { color: var(--teal-deep); font-weight: 600; }
+  .selected-contact { background: var(--paper); border: 1px solid var(--teal); border-radius: 3px; padding: 8px 10px; margin-top: 6px; font-size: 13.5px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 
   .day-heading { font-family: 'Fraunces', serif; font-style: italic; color: var(--ink-faint); font-size: 13.5px; margin: 26px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
   .day-heading:first-child { margin-top: 0; }
@@ -94,7 +88,8 @@
   .entry { display: grid; grid-template-columns: 90px 1fr auto; gap: 16px; padding: 13px 4px; border-bottom: 1px solid var(--paper-deep); align-items: start; }
   .entry:hover { background: var(--paper-dim); }
   .entry .type-tag { font-size: 11px; text-transform: lowercase; color: var(--teal-deep); border: 1px solid var(--teal); border-radius: 999px; padding: 3px 9px; justify-self: start; white-space: nowrap; margin-top: 2px; }
-  .entry .main .who { font-weight: 600; font-size: 15px; }
+  .entry .main .who { font-weight: 600; font-size: 15px; cursor: pointer; }
+  .entry .main .who:hover { text-decoration: underline; }
   .entry .main .co { color: var(--ink-soft); font-size: 13.5px; }
   .entry .main .note { margin-top: 4px; font-size: 13.5px; color: var(--ink); }
   .entry .meta { text-align: right; font-size: 12px; color: var(--ink-faint); white-space: nowrap; }
@@ -106,6 +101,28 @@
 
   .empty { padding: 50px 10px; text-align: center; color: var(--ink-faint); }
   .empty .big { font-family: 'Fraunces', serif; font-style: italic; font-size: 19px; color: var(--ink-soft); display: block; margin-bottom: 6px; }
+
+  /* Contact directory list */
+  .directory-row { display: grid; grid-template-columns: 1fr auto auto; gap: 14px; padding: 12px 4px; border-bottom: 1px solid var(--paper-deep); align-items: center; cursor: pointer; }
+  .directory-row:hover { background: var(--paper-dim); }
+  .directory-row .name { font-weight: 600; }
+  .directory-row .co { color: var(--ink-soft); font-size: 13px; }
+  .directory-row .last { color: var(--ink-faint); font-size: 12px; text-align: right; white-space: nowrap; }
+  .directory-row .tags { font-size: 11.5px; color: var(--teal-deep); }
+
+  /* Company list */
+  .company-row { display: grid; grid-template-columns: 1fr auto; gap: 14px; padding: 12px 4px; border-bottom: 1px solid var(--paper-deep); align-items: center; cursor: pointer; }
+  .company-row:hover { background: var(--paper-dim); }
+  .company-row .name { font-weight: 600; }
+  .company-row .count { color: var(--ink-faint); font-size: 12.5px; }
+
+  /* Contact page */
+  .contact-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
+  .contact-header h2 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 26px; margin: 0 0 4px; color: var(--ink); font-style: normal; }
+  .contact-meta { color: var(--ink-soft); font-size: 13.5px; }
+  .contact-fields { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 24px; margin-top: 14px; font-size: 13.5px; }
+  .contact-fields div span.l { display: block; color: var(--ink-faint); font-size: 11px; }
+  .back-link { background: none; color: var(--teal-deep); font-size: 13px; padding: 0; margin-bottom: 14px; display: inline-block; }
 
   .toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 9px 18px; border-radius: 4px; font-size: 13.5px; opacity: 0; transition: opacity 0.25s; pointer-events: none; z-index: 50; }
   .toast.show { opacity: 1; }
@@ -126,18 +143,16 @@
   <header class="top">
     <div class="brand">
       <h1>The Ledger</h1>
-      <p>A shared record of every outreach, intro and follow-up — read and written straight to your team's Google Sheet.</p>
+      <p>Contacts your team networks with, and the running history of every touch — email, lunch, calls, referrals.</p>
     </div>
-    <div class="viewer" id="viewerBox">
-      <button class="icon-btn" id="settingsBtn">Settings</button>
-    </div>
+    <div class="viewer" id="viewerBox"><button class="icon-btn" id="settingsBtn">Settings</button></div>
   </header>
 
   <div id="bannerRoot"></div>
 
   <div class="stats" id="statsRow">
-    <div class="stat"><span class="n">–</span><span class="l">logged this week</span></div>
-    <div class="stat"><span class="n">–</span><span class="l">contacts touched</span></div>
+    <div class="stat"><span class="n">–</span><span class="l">contacts</span></div>
+    <div class="stat"><span class="n">–</span><span class="l">touches this week</span></div>
     <div class="stat warn"><span class="n">–</span><span class="l">follow-ups due soon</span></div>
     <div class="stat danger"><span class="n">–</span><span class="l">follow-ups overdue</span></div>
   </div>
@@ -145,23 +160,26 @@
   <div class="grid">
     <div>
       <div class="panel">
-        <h2>Log an activity</h2>
+        <h2>Log an interaction</h2>
         <form id="entryForm">
-          <label for="f-contact">Contact name</label>
-          <input id="f-contact" required placeholder="e.g. Priya Shah">
-          <label for="f-company">Company / context</label>
-          <input id="f-company" placeholder="e.g. Meridian Capital">
+          <label for="f-contact-search">Contact</label>
+          <div class="picker-wrap">
+            <input id="f-contact-search" placeholder="Search or add a contact…" autocomplete="off">
+            <div class="picker-results" id="contactResults" style="display:none;"></div>
+          </div>
+          <div id="selectedContactBox"></div>
+
           <div class="row2">
             <div>
               <label for="f-type">Type</label>
               <select id="f-type">
-                <option value="coffee">Coffee / meetup</option>
-                <option value="call">Call</option>
-                <option value="event">Event</option>
-                <option value="intro">Introduction</option>
                 <option value="email">Email</option>
-                <option value="linkedin">LinkedIn / social</option>
-                <option value="other">Other</option>
+                <option value="lunch">Lunch</option>
+                <option value="meet">Meet</option>
+                <option value="referral">Referral</option>
+                <option value="showtell">Show and Tell</option>
+                <option value="call">Call</option>
+                <option value="text">Text</option>
               </select>
             </div>
             <div>
@@ -178,7 +196,7 @@
       </div>
 
       <div class="panel" id="filterPanel">
-        <h2>Filter the feed</h2>
+        <h2>Filter</h2>
         <div>
           <label>Teammate</label>
           <div class="chip-row" id="authorChips"><span class="chip active" data-author="">Everyone</span></div>
@@ -192,11 +210,13 @@
     </div>
 
     <div>
-      <div class="tabs">
-        <button class="tab active" data-tab="feed">Feed</button>
-        <button class="tab" data-tab="followups">Follow-ups<span class="count" id="followupCount">0</span></button>
+      <div class="nav" id="navRoot">
+        <button class="nav-btn active" data-view="feed">Feed</button>
+        <button class="nav-btn" data-view="contacts">Contacts</button>
+        <button class="nav-btn" data-view="companies">Companies</button>
+        <button class="nav-btn" data-view="followups">Follow-ups<span class="count" id="followupCount">0</span></button>
       </div>
-      <div id="feedRoot"><div class="empty"><span class="big">Not connected yet</span>Open Settings to connect this page to your Google Sheet.</div></div>
+      <div id="viewRoot"><div class="empty"><span class="big">Not connected yet</span>Open Settings to connect this page to your Google Sheet.</div></div>
     </div>
   </div>
 </div>
@@ -206,13 +226,15 @@
 <div class="modal-overlay" id="settingsOverlay">
   <div class="modal">
     <h2>Connect to Google Sheets</h2>
-    <p class="sub">One-time setup. See the setup guide for how to get these values.</p>
+    <p class="sub">One-time setup. This file needs two tabs: one for Contacts, one for Interactions.</p>
     <label for="s-client">OAuth Client ID</label>
     <input id="s-client" placeholder="xxxxxxxx.apps.googleusercontent.com">
     <label for="s-apikey">API key</label>
     <input id="s-apikey" placeholder="AIza...">
-    <label for="s-sheetname">Tab name in the Sheet</label>
-    <input id="s-sheetname" placeholder="ActivityLog" value="ActivityLog">
+    <label for="s-contactstab">Contacts tab name</label>
+    <input id="s-contactstab" value="Contacts">
+    <label for="s-interactionstab">Interactions tab name</label>
+    <input id="s-interactionstab" value="Interactions">
     <div id="fileStatus"></div>
     <div class="modal-actions">
       <button class="btn-secondary" id="settingsCancel">Cancel</button>
@@ -221,65 +243,82 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="newContactOverlay">
+  <div class="modal">
+    <h2>New contact</h2>
+    <p class="sub" id="newContactSub">Fill in what you know — you can add more later.</p>
+    <div id="dupWarning"></div>
+    <label for="nc-name">Name</label>
+    <input id="nc-name" required>
+    <label for="nc-company">Company</label>
+    <input id="nc-company">
+    <div class="row2">
+      <div><label for="nc-email">Email</label><input id="nc-email" type="email"></div>
+      <div><label for="nc-phone">Phone</label><input id="nc-phone"></div>
+    </div>
+    <div class="row2">
+      <div><label for="nc-industry">Industry</label><input id="nc-industry"></div>
+      <div><label for="nc-howmet">How met</label><input id="nc-howmet"></div>
+    </div>
+    <label for="nc-tags">Tags</label>
+    <input id="nc-tags" placeholder="e.g. warm lead, past client">
+    <div class="modal-actions">
+      <button class="btn-secondary" id="ncCancel">Cancel</button>
+      <button class="btn-primary" id="ncSave">Create contact</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function () {
-  const TYPE_LABELS = { coffee:'coffee', call:'call', event:'event', intro:'intro', email:'email', linkedin:'social', other:'other' };
-  const REQUIRED_COLUMNS = ['Date','Type','Contact','Company','Notes','FollowUpDate','FollowUpDone','LoggedBy'];
+  const TYPE_LABELS = { email:'Email', lunch:'Lunch', meet:'Meet', referral:'Referral', showtell:'Show and Tell', call:'Call', text:'Text' };
+  const CONTACT_FIELDS = ['ContactID','Name','Company','Email','Phone','Industry','HowMet','Tags','CreatedAt','CreatedBy'];
+  const INTERACTION_FIELDS = ['InteractionID','ContactID','Type','Date','Notes','FollowUpDate','FollowUpDone','LoggedBy'];
   const SCOPE = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile';
 
   const DEFAULTS = {
     clientId: '765856117299-r67l2d2hhki5k1g4t83rava6rkmmq96r.apps.googleusercontent.com',
     apiKey: 'AIzaSyBS-TMDgKhJ0tqE3Jc5cjcjOcNYG7Y1iFQ',
-    sheetName: 'ActivityLog'
+    contactsTab: 'Contacts',
+    interactionsTab: 'Interactions'
   };
   let cfg = Object.assign({}, DEFAULTS, loadConfig());
+
   let tokenClient = null;
   let accessToken = null;
   let me = { name: '', picture: '' };
-  let columnIndex = {};
-  let rows = [];
-  let activeTab = 'feed';
+  let contactsColIdx = {};
+  let interactionsColIdx = {};
+  let contacts = [];        // {rowIndex, contactId, name, company, email, phone, industry, howMet, tags, createdAt, createdBy}
+  let interactions = [];    // {rowIndex, interactionId, contactId, type, date, notes, followUpDate, followUpDone, loggedBy}
+  let contactsById = {};
+  let pickerLoaded = false;
+  let pendingAction = null; // 'setup' | 'refresh'
+
+  let currentView = 'feed';
+  let currentCompany = null;
+  let currentContactId = null;
   let filterAuthor = '';
   let activeTypeFilters = new Set();
-  let pickerLoaded = false;
+  let selectedContactId = null; // for the log-interaction form
 
   const $ = (sel) => document.querySelector(sel);
-  const feedRoot = $('#feedRoot');
+  const viewRoot = $('#viewRoot');
   const bannerRoot = $('#bannerRoot');
 
-  function loadConfig() {
-    try { return JSON.parse(localStorage.getItem('ledgerGoogleConfig') || '{}'); } catch (e) { return {}; }
-  }
-  function saveConfig() { try { localStorage.setItem('ledgerGoogleConfig', JSON.stringify(cfg)); } catch (e) {} }
+  function loadConfig() { try { return JSON.parse(localStorage.getItem('ledgerCrmConfig') || '{}'); } catch (e) { return {}; } }
+  function saveConfig() { try { localStorage.setItem('ledgerCrmConfig', JSON.stringify(cfg)); } catch (e) {} }
 
-  function showToast(msg) {
-    const t = $('#toast'); t.textContent = msg; t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2600);
-  }
+  function showToast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2600); }
   function showBanner(msg, kind) { bannerRoot.innerHTML = `<div class="banner ${kind||''}">${msg}</div>`; }
   function clearBanner() { bannerRoot.innerHTML = ''; }
 
   function todayISO() { return new Date().toISOString().slice(0,10); }
-  function fmtDate(iso) {
-    if (!iso) return '';
-    const d = new Date(iso + 'T00:00:00');
-    if (isNaN(d)) return iso;
-    return d.toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
-  }
-  function daysFromToday(iso) {
-    const today = new Date(todayISO() + 'T00:00:00');
-    const d = new Date(iso + 'T00:00:00');
-    return Math.round((d - today) / 86400000);
-  }
-  function escapeHtml(s) {
-    return (s || '').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
-  function colToLetter(n) {
-    let s = '';
-    n = n + 1;
-    while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); }
-    return s;
-  }
+  function fmtDate(iso) { if (!iso) return ''; const d = new Date(iso + 'T00:00:00'); if (isNaN(d)) return iso; return d.toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' }); }
+  function daysFromToday(iso) { const today = new Date(todayISO() + 'T00:00:00'); const d = new Date(iso + 'T00:00:00'); return Math.round((d - today) / 86400000); }
+  function escapeHtml(s) { return (s || '').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function colToLetter(n) { let s=''; n=n+1; while(n>0){ const m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=Math.floor((n-1)/26); } return s; }
+  function genId(prefix) { return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 
   $('#f-date').value = todayISO();
 
@@ -287,7 +326,8 @@
   function openSettings() {
     $('#s-client').value = cfg.clientId || '';
     $('#s-apikey').value = cfg.apiKey || '';
-    $('#s-sheetname').value = cfg.sheetName || 'ActivityLog';
+    $('#s-contactstab').value = cfg.contactsTab || 'Contacts';
+    $('#s-interactionstab').value = cfg.interactionsTab || 'Interactions';
     $('#fileStatus').innerHTML = cfg.fileName ? `<div class="connected-file">Connected file: <strong>${escapeHtml(cfg.fileName)}</strong></div>` : '';
     $('#settingsOverlay').classList.add('show');
   }
@@ -297,11 +337,12 @@
   $('#settingsConnect').addEventListener('click', () => {
     const clientId = $('#s-client').value.trim();
     const apiKey = $('#s-apikey').value.trim();
-    const sheetName = $('#s-sheetname').value.trim() || 'ActivityLog';
+    const contactsTab = $('#s-contactstab').value.trim() || 'Contacts';
+    const interactionsTab = $('#s-interactionstab').value.trim() || 'Interactions';
     if (!clientId || !apiKey) { showToast('Client ID and API key are both required.'); return; }
-    cfg = Object.assign({}, cfg, { clientId, apiKey, sheetName });
+    cfg = Object.assign({}, cfg, { clientId, apiKey, contactsTab, interactionsTab });
     saveConfig();
-    tokenClient = null; // force re-init in case clientId changed
+    tokenClient = null;
     signIn('setup');
   });
 
@@ -318,13 +359,6 @@
   }
 
   // ---------------- Auth ----------------
-  // IMPORTANT: browsers (Safari especially) only allow a popup to open when
-  // triggered synchronously from a real click, with nothing awaited first.
-  // So the token client is built ahead of time in the background, and
-  // requestAccessToken() is always called directly inside a click handler
-  // with no `await` before it.
-  let pendingAction = null; // 'setup' | 'refresh'
-
   function ensureTokenClient() {
     if (tokenClient) return true;
     if (window.google && google.accounts && google.accounts.oauth2) {
@@ -342,7 +376,7 @@
             } else {
               try {
                 clearBanner();
-                await loadColumns();
+                await loadAllColumns();
                 await refresh();
                 $('#submitBtn').disabled = false;
                 $('#submitBtn').textContent = 'Add to the ledger';
@@ -361,20 +395,11 @@
     }
     return false;
   }
-
-  // Build the token client as soon as Google's script is ready, without
-  // blocking anything — this runs in the background from page load.
-  (function initInBackground() {
-    if (ensureTokenClient()) return;
-    setTimeout(initInBackground, 150);
-  })();
+  (function initInBackground() { if (ensureTokenClient()) return; setTimeout(initInBackground, 150); })();
 
   function signIn(action) {
     pendingAction = action;
-    if (!ensureTokenClient()) {
-      showToast("Still loading Google's sign-in — try again in a second.");
-      return;
-    }
+    if (!ensureTokenClient()) { showToast("Still loading Google's sign-in — try again in a second."); return; }
     tokenClient.requestAccessToken({ prompt: action === 'setup' ? 'consent' : '' });
   }
 
@@ -385,9 +410,8 @@
       me.name = data.name || data.email || '';
       me.picture = data.picture || '';
       renderViewer();
-    } catch (e) { /* leave defaults */ }
+    } catch (e) {}
   }
-
   function renderViewer() {
     const box = $('#viewerBox');
     if (me.name) {
@@ -397,6 +421,12 @@
     }
     $('#settingsBtn').addEventListener('click', openSettings);
   }
+  function renderSignInPrompt() {
+    const box = $('#viewerBox');
+    box.innerHTML = `<button class="icon-btn" id="signInBtn">Sign in with Google</button><button class="icon-btn" id="settingsBtn">Settings</button>`;
+    $('#signInBtn').addEventListener('click', () => signIn('refresh'));
+    $('#settingsBtn').addEventListener('click', openSettings);
+  }
 
   // ---------------- Picker ----------------
   async function loadPicker() {
@@ -404,11 +434,9 @@
     await waitFor(() => window.gapi && typeof gapi.load === 'function');
     return new Promise((resolve) => { gapi.load('picker', () => { pickerLoaded = true; resolve(); }); });
   }
-
   async function pickFile() {
     await loadPicker();
-    const view = new google.picker.DocsView(google.picker.ViewId.SPREADSHEETS)
-      .setMode(google.picker.DocsViewMode.LIST);
+    const view = new google.picker.DocsView(google.picker.ViewId.SPREADSHEETS).setMode(google.picker.DocsViewMode.LIST);
     const picker = new google.picker.PickerBuilder()
       .setAppId(cfg.clientId.split('-')[0])
       .addView(view)
@@ -423,7 +451,7 @@
           closeSettings();
           clearBanner();
           try {
-            await loadColumns();
+            await loadAllColumns();
             await refresh();
             $('#submitBtn').disabled = false;
             $('#submitBtn').textContent = 'Add to the ledger';
@@ -448,64 +476,208 @@
       renderSignInPrompt();
       throw new Error('Your session expired — click "Sign in with Google" above and try again.');
     }
-    if (!res.ok) {
-      const text = await res.text().catch(() => '');
-      throw new Error(`Sheets API ${res.status}: ${text.slice(0,200)}`);
-    }
+    if (!res.ok) { const text = await res.text().catch(() => ''); throw new Error(`Sheets API ${res.status}: ${text.slice(0,200)}`); }
     return res.json();
   }
 
-  async function loadColumns() {
-    const range = encodeURIComponent(`${cfg.sheetName}!1:1`);
+  async function resolveTabName(configuredKey, label) {
+    const meta = await sheetsFetch(`?fields=sheets.properties.title`);
+    const actualTabs = (meta.sheets || []).map(s => s.properties.title);
+    const wanted = cfg[configuredKey];
+    const match = actualTabs.find(t => t.trim().toLowerCase() === wanted.trim().toLowerCase());
+    if (!match) {
+      throw new Error(`No "${label}" tab named "${wanted}" was found in this file. This file's tabs are: ${actualTabs.join(', ') || '(none)'}. Fix the tab name in Settings, then reconnect.`);
+    }
+    if (match !== cfg[configuredKey]) { cfg[configuredKey] = match; saveConfig(); }
+    return match;
+  }
+
+  async function loadTabColumns(tabName, requiredFields, label) {
+    const range = encodeURIComponent(`${tabName}!1:1`);
     const data = await sheetsFetch(`/values/${range}`);
     const header = (data.values && data.values[0]) || [];
-    columnIndex = {};
-    header.forEach((name, i) => { columnIndex[name.trim()] = i; });
-    const missing = REQUIRED_COLUMNS.filter(c => !(c in columnIndex));
-    if (missing.length) {
-      showBanner(`The "${escapeHtml(cfg.sheetName)}" tab is missing column(s): ${missing.join(', ')}. Add them as headers, then refresh.`, 'warn');
-    }
+    const idx = {};
+    header.forEach((name, i) => { idx[name.trim()] = i; });
+    const missing = requiredFields.filter(c => !(c in idx));
+    if (missing.length) showBanner(`The "${escapeHtml(tabName)}" tab is missing column(s): ${missing.join(', ')}. Add them as headers, then refresh.`, 'warn');
+    return idx;
+  }
+
+  async function loadAllColumns() {
+    const contactsTab = await resolveTabName('contactsTab', 'Contacts');
+    const interactionsTab = await resolveTabName('interactionsTab', 'Interactions');
+    contactsColIdx = await loadTabColumns(contactsTab, CONTACT_FIELDS, 'Contacts');
+    interactionsColIdx = await loadTabColumns(interactionsTab, INTERACTION_FIELDS, 'Interactions');
   }
 
   function normalizeDate(v) {
     if (!v) return '';
     if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) return v.slice(0,10);
-    const d = new Date(v);
-    if (!isNaN(d)) return d.toISOString().slice(0,10);
+    const d = new Date(v); if (!isNaN(d)) return d.toISOString().slice(0,10);
     return String(v);
   }
 
-  function rowToObject(sheetRowNumber, values) {
-    const get = (name) => (name in columnIndex) ? (values[columnIndex[name]] || '') : '';
+  function rowToContact(rowIndex, values) {
+    const get = (name) => (name in contactsColIdx) ? (values[contactsColIdx[name]] || '') : '';
+    return {
+      rowIndex, contactId: get('ContactID'), name: get('Name'), company: get('Company'),
+      email: get('Email'), phone: get('Phone'), industry: get('Industry'), howMet: get('HowMet'),
+      tags: get('Tags'), createdAt: get('CreatedAt'), createdBy: get('CreatedBy')
+    };
+  }
+  function rowToInteraction(rowIndex, values) {
+    const get = (name) => (name in interactionsColIdx) ? (values[interactionsColIdx[name]] || '') : '';
     const done = get('FollowUpDone');
     return {
-      sheetRow: sheetRowNumber,
-      date: normalizeDate(get('Date')),
-      type: (get('Type') || 'other').toString().toLowerCase(),
-      contactName: get('Contact') || '',
-      company: get('Company') || '',
-      notes: get('Notes') || '',
-      followUpDate: normalizeDate(get('FollowUpDate')),
-      followUpDone: done.toString().toLowerCase() === 'true',
-      loggedBy: get('LoggedBy') || ''
+      rowIndex, interactionId: get('InteractionID'), contactId: get('ContactID'),
+      type: (get('Type') || 'other').toString().toLowerCase(), date: normalizeDate(get('Date')),
+      notes: get('Notes'), followUpDate: normalizeDate(get('FollowUpDate')),
+      followUpDone: done.toString().toLowerCase() === 'true', loggedBy: get('LoggedBy')
     };
   }
 
   async function refresh() {
-    feedRoot.innerHTML = '<div class="empty">Reading the sheet…</div>';
+    viewRoot.innerHTML = '<div class="empty">Reading the sheet…</div>';
     try {
-      const range = encodeURIComponent(`${cfg.sheetName}!A2:Z`);
-      const data = await sheetsFetch(`/values/${range}`);
-      const values = data.values || [];
-      rows = values.map((v, i) => rowToObject(i + 2, v)).filter(r => r.contactName || r.date);
+      const [contactsData, interactionsData] = await Promise.all([
+        sheetsFetch(`/values/${encodeURIComponent(cfg.contactsTab + '!A2:Z')}`),
+        sheetsFetch(`/values/${encodeURIComponent(cfg.interactionsTab + '!A2:Z')}`)
+      ]);
+      contacts = (contactsData.values || []).map((v,i) => rowToContact(i+2, v)).filter(c => c.contactId);
+      interactions = (interactionsData.values || []).map((v,i) => rowToInteraction(i+2, v)).filter(r => r.contactId);
+      contactsById = {}; contacts.forEach(c => { contactsById[c.contactId] = c; });
       renderAuthorChips();
       render();
     } catch (err) {
       console.error(err);
-      feedRoot.innerHTML = `<div class="empty"><span class="big">Couldn't read the sheet</span>${escapeHtml(err.message)}</div>`;
+      viewRoot.innerHTML = `<div class="empty"><span class="big">Couldn't read the sheet</span>${escapeHtml(err.message)}</div>`;
     }
   }
   $('#refreshBtn').addEventListener('click', refresh);
+
+  // ---------------- Contact typeahead / add-new ----------------
+  const contactSearch = $('#f-contact-search');
+  const contactResults = $('#contactResults');
+  contactSearch.addEventListener('input', () => {
+    const q = contactSearch.value.trim().toLowerCase();
+    selectedContactId = null;
+    $('#selectedContactBox').innerHTML = '';
+    if (!q) { contactResults.style.display = 'none'; return; }
+    const matches = contacts.filter(c => c.name.toLowerCase().includes(q) || c.company.toLowerCase().includes(q)).slice(0, 8);
+    let html = matches.map(c => `<div class="picker-row" data-id="${escapeHtml(c.contactId)}"><div>${escapeHtml(c.name)}</div><div class="co">${escapeHtml(c.company)}</div></div>`).join('');
+    html += `<div class="picker-row add-new" data-new="1">+ Add "${escapeHtml(contactSearch.value.trim())}" as a new contact</div>`;
+    contactResults.innerHTML = html;
+    contactResults.style.display = 'block';
+    contactResults.querySelectorAll('[data-id]').forEach(row => {
+      row.addEventListener('click', () => selectContact(row.dataset.id));
+    });
+    contactResults.querySelector('[data-new]').addEventListener('click', () => {
+      openNewContactModal(contactSearch.value.trim());
+    });
+  });
+  document.addEventListener('click', (e) => {
+    if (!contactResults.contains(e.target) && e.target !== contactSearch) contactResults.style.display = 'none';
+  });
+
+  function selectContact(contactId) {
+    const c = contactsById[contactId];
+    if (!c) return;
+    selectedContactId = contactId;
+    contactSearch.value = '';
+    contactResults.style.display = 'none';
+    $('#selectedContactBox').innerHTML = `<div class="selected-contact"><span>${escapeHtml(c.name)} — ${escapeHtml(c.company || 'no company')}</span><button type="button" class="btn-link" id="clearSelectedContact">change</button></div>`;
+    $('#clearSelectedContact').addEventListener('click', () => { selectedContactId = null; $('#selectedContactBox').innerHTML = ''; });
+  }
+
+  // ---------------- New contact modal ----------------
+  let newContactContext = null; // 'log' | 'directory'
+  function openNewContactModal(prefillName, context) {
+    newContactContext = context || 'log';
+    $('#nc-name').value = prefillName || '';
+    $('#nc-company').value = ''; $('#nc-email').value = ''; $('#nc-phone').value = '';
+    $('#nc-industry').value = ''; $('#nc-howmet').value = ''; $('#nc-tags').value = '';
+    $('#dupWarning').innerHTML = '';
+    $('#newContactOverlay').classList.add('show');
+  }
+  $('#ncCancel').addEventListener('click', () => $('#newContactOverlay').classList.remove('show'));
+
+  function findDuplicates(name, company) {
+    const n = name.trim().toLowerCase(), co = company.trim().toLowerCase();
+    const strong = contacts.find(c => c.name.trim().toLowerCase() === n && c.company.trim().toLowerCase() === co && n);
+    const loose = !strong && n ? contacts.filter(c => c.name.trim().toLowerCase() === n) : [];
+    return { strong, loose };
+  }
+
+  $('#ncSave').addEventListener('click', async () => {
+    const name = $('#nc-name').value.trim();
+    if (!name) { showToast('Name is required.'); return; }
+    const company = $('#nc-company').value.trim();
+    const { strong, loose } = findDuplicates(name, company);
+    if (strong && !$('#dupWarning').dataset.confirmed) {
+      $('#dupWarning').dataset.confirmed = '';
+      $('#dupWarning').innerHTML = `<div class="banner warn">This looks like <strong>${escapeHtml(strong.name)}</strong> at <strong>${escapeHtml(strong.company)}</strong>, already in your contacts. <button type="button" class="btn-link" id="useExisting">Use that contact instead</button>, or click Create contact again to add a new one anyway.</div>`;
+      $('#useExisting').addEventListener('click', () => {
+        $('#newContactOverlay').classList.remove('show');
+        if (newContactContext === 'log') selectContact(strong.contactId);
+        else openContact(strong.contactId);
+      });
+      $('#dupWarning').dataset.confirmed = '1';
+      return;
+    }
+    if (loose.length && !$('#dupWarning').dataset.looseShown) {
+      $('#dupWarning').dataset.looseShown = '1';
+      $('#dupWarning').innerHTML = `<div class="banner warn">Heads up — there's already ${loose.length === 1 ? 'a contact' : loose.length + ' contacts'} named "${escapeHtml(name)}" (${loose.map(c => escapeHtml(c.company || 'no company')).join(', ')}). Click Create contact again to add this one anyway.</div>`;
+      return;
+    }
+    const btn = $('#ncSave'); btn.disabled = true; btn.textContent = 'Creating…';
+    try {
+      const newId = await createContact({
+        name, company, email: $('#nc-email').value.trim(), phone: $('#nc-phone').value.trim(),
+        industry: $('#nc-industry').value.trim(), howMet: $('#nc-howmet').value.trim(), tags: $('#nc-tags').value.trim()
+      });
+      $('#newContactOverlay').classList.remove('show');
+      showToast('Contact created.');
+      await refresh();
+      if (newContactContext === 'log') selectContact(newId);
+      else openContact(newId);
+    } catch (err) {
+      console.error(err);
+      showToast("Couldn't create the contact — try again.");
+    } finally {
+      btn.disabled = false; btn.textContent = 'Create contact';
+      delete $('#dupWarning').dataset.confirmed; delete $('#dupWarning').dataset.looseShown;
+    }
+  });
+
+  function buildRow(width, columnIndex, values) {
+    const arr = new Array(width).fill('');
+    Object.entries(values).forEach(([name, val]) => { if (name in columnIndex) arr[columnIndex[name]] = val; });
+    return arr;
+  }
+
+  async function createContact(fields) {
+    const newId = genId('c');
+    const width = Math.max(...Object.values(contactsColIdx)) + 1;
+    const row = buildRow(width, contactsColIdx, {
+      ContactID: newId, Name: fields.name, Company: fields.company, Email: fields.email, Phone: fields.phone,
+      Industry: fields.industry, HowMet: fields.howMet, Tags: fields.tags, CreatedAt: todayISO(), CreatedBy: me.name || ''
+    });
+    await sheetsFetch(`/values/${encodeURIComponent(cfg.contactsTab + '!A:A')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, {
+      method: 'POST', body: JSON.stringify({ values: [row] })
+    });
+    return newId;
+  }
+
+  // ---------------- Nav ----------------
+  $('#navRoot').querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => { currentView = btn.dataset.view; currentCompany = null; currentContactId = null; setActiveNav(); render(); });
+  });
+  function setActiveNav() {
+    $('#navRoot').querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === currentView));
+  }
+
+  function openContact(contactId) { currentView = 'contact'; currentContactId = contactId; setActiveNav(); render(); }
+  function openCompany(company) { currentView = 'company'; currentCompany = company; setActiveNav(); render(); }
 
   // ---------------- Filters ----------------
   (function buildTypeChips() {
@@ -513,98 +685,52 @@
     Object.entries(TYPE_LABELS).forEach(([key,label]) => {
       const chip = document.createElement('span');
       chip.className = 'chip'; chip.textContent = label; chip.dataset.type = key;
-      chip.addEventListener('click', () => {
-        if (activeTypeFilters.has(key)) activeTypeFilters.delete(key); else activeTypeFilters.add(key);
-        chip.classList.toggle('active'); render();
-      });
+      chip.addEventListener('click', () => { if (activeTypeFilters.has(key)) activeTypeFilters.delete(key); else activeTypeFilters.add(key); chip.classList.toggle('active'); render(); });
       wrap.appendChild(chip);
     });
   })();
-
   function renderAuthorChips() {
     const wrap = $('#authorChips');
     wrap.querySelectorAll('[data-author]:not([data-author=""])').forEach(c => c.remove());
-    const names = [...new Set(rows.map(r => r.loggedBy).filter(Boolean))].sort();
+    const names = [...new Set(interactions.map(r => r.loggedBy).filter(Boolean))].sort();
     names.forEach(name => {
       const chip = document.createElement('span');
       chip.className = 'chip'; chip.textContent = name; chip.dataset.author = name;
-      chip.addEventListener('click', () => {
-        filterAuthor = (filterAuthor === name) ? '' : name;
-        [...wrap.children].forEach(c => c.classList.toggle('active', c.dataset.author === filterAuthor));
-        render();
-      });
+      chip.addEventListener('click', () => { filterAuthor = (filterAuthor === name) ? '' : name; [...wrap.children].forEach(c => c.classList.toggle('active', c.dataset.author === filterAuthor)); render(); });
       wrap.appendChild(chip);
     });
     const everyone = wrap.querySelector('[data-author=""]');
-    everyone.onclick = () => {
-      filterAuthor = '';
-      [...wrap.children].forEach(c => c.classList.toggle('active', c.dataset.author === ''));
-      render();
-    };
+    everyone.onclick = () => { filterAuthor = ''; [...wrap.children].forEach(c => c.classList.toggle('active', c.dataset.author === '')); render(); };
   }
-
-  document.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      activeTab = tab.dataset.tab;
-      render();
-    });
-  });
+  function applyFilters(list) {
+    return list.filter(r => { if (filterAuthor && r.loggedBy !== filterAuthor) return false; if (activeTypeFilters.size && !activeTypeFilters.has(r.type)) return false; return true; });
+  }
 
   // ---------------- Render ----------------
   function render() {
     renderStats();
-    if (activeTab === 'feed') renderFeed(); else renderFollowups();
+    if (currentView === 'feed') renderFeed();
+    else if (currentView === 'contacts') renderDirectory();
+    else if (currentView === 'companies') renderCompanies();
+    else if (currentView === 'followups') renderFollowups();
+    else if (currentView === 'contact') renderContactPage();
+    else if (currentView === 'company') renderCompanyPage();
   }
 
   function renderStats() {
     const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
     const weekAgoISO = weekAgo.toISOString().slice(0,10);
-    const thisWeek = rows.filter(r => r.date >= weekAgoISO).length;
-    const contacts = new Set(rows.map(r => r.contactName.toLowerCase().trim()).filter(Boolean)).size;
-    const dueSoon = rows.filter(r => r.followUpDate && !r.followUpDone && daysFromToday(r.followUpDate) >= 0 && daysFromToday(r.followUpDate) <= 7).length;
-    const overdue = rows.filter(r => r.followUpDate && !r.followUpDone && daysFromToday(r.followUpDate) < 0).length;
+    const thisWeek = interactions.filter(r => r.date >= weekAgoISO).length;
+    const dueSoon = interactions.filter(r => r.followUpDate && !r.followUpDone && daysFromToday(r.followUpDate) >= 0 && daysFromToday(r.followUpDate) <= 7).length;
+    const overdue = interactions.filter(r => r.followUpDate && !r.followUpDone && daysFromToday(r.followUpDate) < 0).length;
     $('#followupCount').textContent = dueSoon + overdue;
     const nums = document.querySelectorAll('.stats .n');
-    nums[0].textContent = thisWeek; nums[1].textContent = contacts; nums[2].textContent = dueSoon; nums[3].textContent = overdue;
+    nums[0].textContent = contacts.length; nums[1].textContent = thisWeek; nums[2].textContent = dueSoon; nums[3].textContent = overdue;
   }
 
-  function applyFilters(list) {
-    return list.filter(r => {
-      if (filterAuthor && r.loggedBy !== filterAuthor) return false;
-      if (activeTypeFilters.size && !activeTypeFilters.has(r.type)) return false;
-      return true;
-    });
-  }
-
-  function renderFeed() {
-    const list = applyFilters([...rows].sort((a,b) => b.date.localeCompare(a.date)));
-    if (!list.length) { feedRoot.innerHTML = '<div class="empty"><span class="big">Nothing logged yet</span>Be the first to add an entry on the left.</div>'; return; }
-    let html = ''; let lastDate = null;
-    list.forEach(r => {
-      if (r.date !== lastDate) { html += `<div class="day-heading">${fmtDate(r.date)}</div>`; lastDate = r.date; }
-      html += entryHtml(r);
-    });
-    feedRoot.innerHTML = html;
-    wireEntryActions();
-  }
-
-  function renderFollowups() {
-    const pending = rows.filter(r => r.followUpDate && !r.followUpDone).sort((a,b) => a.followUpDate.localeCompare(b.followUpDate));
-    const list = applyFilters(pending);
-    if (!list.length) { feedRoot.innerHTML = '<div class="empty"><span class="big">No open follow-ups</span>Anything you flag for follow-up will show up here.</div>'; return; }
-    let html = ''; let lastDate = null;
-    list.forEach(r => {
-      if (r.followUpDate !== lastDate) {
-        const d = daysFromToday(r.followUpDate);
-        const label = d < 0 ? `${fmtDate(r.followUpDate)} — overdue` : d === 0 ? `${fmtDate(r.followUpDate)} — today` : fmtDate(r.followUpDate);
-        html += `<div class="day-heading">${label}</div>`; lastDate = r.followUpDate;
-      }
-      html += entryHtml(r, true);
-    });
-    feedRoot.innerHTML = html;
-    wireEntryActions();
+  function contactLabel(contactId) {
+    const c = contactsById[contactId];
+    return c ? { name: c.name, company: c.company } : { name: 'Unknown contact', company: '' };
   }
 
   function followupBadge(r) {
@@ -617,120 +743,197 @@
   }
 
   function entryHtml(r, showToggle) {
-    const toggle = (showToggle && !r.followUpDone) ? `<button class="done-toggle" data-done="${r.sheetRow}">Mark followed up</button>` : '';
+    const c = contactLabel(r.contactId);
+    const toggle = (showToggle && !r.followUpDone) ? `<button class="done-toggle" data-done="${r.rowIndex}">Mark followed up</button>` : '';
     return `
       <div class="entry">
-        <span class="type-tag">${TYPE_LABELS[r.type] || 'other'}</span>
+        <span class="type-tag">${TYPE_LABELS[r.type] || 'Other'}</span>
         <div class="main">
-          <div class="who">${escapeHtml(r.contactName || 'Unnamed contact')}</div>
-          ${r.company ? `<div class="co">${escapeHtml(r.company)}</div>` : ''}
+          <div class="who" data-open-contact="${escapeHtml(r.contactId)}">${escapeHtml(c.name)}</div>
+          ${c.company ? `<div class="co">${escapeHtml(c.company)}</div>` : ''}
           ${r.notes ? `<div class="note">${escapeHtml(r.notes)}</div>` : ''}
           ${followupBadge(r)}
           ${toggle}
         </div>
-        <div class="meta">
-          <div>${escapeHtml(r.loggedBy || 'Unknown')}</div>
-          <div>${fmtDate(r.date)}</div>
-        </div>
+        <div class="meta"><div>${escapeHtml(r.loggedBy || 'Unknown')}</div><div>${fmtDate(r.date)}</div></div>
       </div>`;
   }
 
   function wireEntryActions() {
-    feedRoot.querySelectorAll('[data-done]').forEach(btn => {
+    viewRoot.querySelectorAll('[data-done]').forEach(btn => {
       btn.addEventListener('click', async () => {
-        const sheetRow = Number(btn.dataset.done);
+        const rowNum = Number(btn.dataset.done);
         btn.disabled = true;
         try {
-          const col = colToLetter(columnIndex['FollowUpDone']);
-          const range = encodeURIComponent(`${cfg.sheetName}!${col}${sheetRow}`);
-          await sheetsFetch(`/values/${range}?valueInputOption=RAW`, {
-            method: 'PUT',
-            body: JSON.stringify({ values: [['TRUE']] })
-          });
+          const col = colToLetter(interactionsColIdx['FollowUpDone']);
+          const range = encodeURIComponent(`${cfg.interactionsTab}!${col}${rowNum}`);
+          await sheetsFetch(`/values/${range}?valueInputOption=RAW`, { method: 'PUT', body: JSON.stringify({ values: [['TRUE']] }) });
           showToast('Marked as followed up.');
           await refresh();
-        } catch (e) {
-          console.error(e);
-          showToast("Couldn't update the sheet — try again.");
-          btn.disabled = false;
-        }
+        } catch (e) { console.error(e); showToast("Couldn't update the sheet — try again."); btn.disabled = false; }
       });
+    });
+    viewRoot.querySelectorAll('[data-open-contact]').forEach(el => {
+      el.addEventListener('click', () => openContact(el.dataset.openContact));
     });
   }
 
-  function buildRowValues(fields) {
-    const indices = Object.values(columnIndex);
-    if (!indices.length) {
-      throw new Error('Column headers haven\'t loaded yet — click "Refresh from Sheet" and try again.');
-    }
-    const width = Math.max(...indices) + 1;
-    const arr = new Array(width).fill('');
-    const set = (name, val) => { if (name in columnIndex) arr[columnIndex[name]] = val; };
-    set('Date', fields.date);
-    set('Type', fields.type);
-    set('Contact', fields.contactName);
-    set('Company', fields.company);
-    set('Notes', fields.notes);
-    set('FollowUpDate', fields.followUpDate || '');
-    set('FollowUpDone', fields.followUpDone ? 'TRUE' : 'FALSE');
-    set('LoggedBy', fields.loggedBy);
-    return arr;
+  function renderFeed() {
+    const list = applyFilters([...interactions].sort((a,b) => b.date.localeCompare(a.date)));
+    if (!list.length) { viewRoot.innerHTML = '<div class="empty"><span class="big">Nothing logged yet</span>Log your first interaction on the left.</div>'; return; }
+    let html = ''; let lastDate = null;
+    list.forEach(r => { if (r.date !== lastDate) { html += `<div class="day-heading">${fmtDate(r.date)}</div>`; lastDate = r.date; } html += entryHtml(r); });
+    viewRoot.innerHTML = html;
+    wireEntryActions();
   }
 
-  // ---------------- Add entry ----------------
+  function renderFollowups() {
+    const pending = interactions.filter(r => r.followUpDate && !r.followUpDone).sort((a,b) => a.followUpDate.localeCompare(b.followUpDate));
+    const list = applyFilters(pending);
+    if (!list.length) { viewRoot.innerHTML = '<div class="empty"><span class="big">No open follow-ups</span>Anything you flag for follow-up will show up here.</div>'; return; }
+    let html = ''; let lastDate = null;
+    list.forEach(r => {
+      if (r.followUpDate !== lastDate) {
+        const d = daysFromToday(r.followUpDate);
+        const label = d < 0 ? `${fmtDate(r.followUpDate)} — overdue` : d === 0 ? `${fmtDate(r.followUpDate)} — today` : fmtDate(r.followUpDate);
+        html += `<div class="day-heading">${label}</div>`; lastDate = r.followUpDate;
+      }
+      html += entryHtml(r, true);
+    });
+    viewRoot.innerHTML = html;
+    wireEntryActions();
+  }
+
+  function lastTouchDate(contactId) {
+    const rows = interactions.filter(r => r.contactId === contactId);
+    if (!rows.length) return null;
+    return rows.reduce((max, r) => r.date > max ? r.date : max, rows[0].date);
+  }
+
+  function renderDirectory() {
+    const search = viewRoot.querySelector ? '' : '';
+    let html = `<div class="panel" style="margin-bottom:16px;"><input id="dirSearch" placeholder="Search contacts by name or company…"></div>
+      <button class="btn-secondary" id="addContactBtn" style="width:auto; margin-bottom:14px;">+ New contact</button>
+      <div id="dirList"></div>`;
+    viewRoot.innerHTML = html;
+    $('#addContactBtn').addEventListener('click', () => openNewContactModal('', 'directory'));
+    const renderList = () => {
+      const q = ($('#dirSearch').value || '').trim().toLowerCase();
+      let list = [...contacts];
+      if (q) list = list.filter(c => c.name.toLowerCase().includes(q) || c.company.toLowerCase().includes(q));
+      list.sort((a,b) => a.name.localeCompare(b.name));
+      const dirList = $('#dirList');
+      if (!list.length) { dirList.innerHTML = '<div class="empty"><span class="big">No contacts found</span></div>'; return; }
+      dirList.innerHTML = list.map(c => {
+        const last = lastTouchDate(c.contactId);
+        return `<div class="directory-row" data-open="${escapeHtml(c.contactId)}">
+          <div><div class="name">${escapeHtml(c.name)}</div><div class="co">${escapeHtml(c.company)}</div></div>
+          <div class="tags">${escapeHtml(c.tags)}</div>
+          <div class="last">${last ? 'Last: ' + fmtDate(last) : 'No history yet'}</div>
+        </div>`;
+      }).join('');
+      dirList.querySelectorAll('[data-open]').forEach(row => row.addEventListener('click', () => openContact(row.dataset.open)));
+    };
+    $('#dirSearch').addEventListener('input', renderList);
+    renderList();
+  }
+
+  function renderCompanies() {
+    const byCompany = {};
+    contacts.forEach(c => { const key = c.company.trim() || '(No company)'; (byCompany[key] = byCompany[key] || []).push(c); });
+    const names = Object.keys(byCompany).sort((a,b) => a.localeCompare(b));
+    if (!names.length) { viewRoot.innerHTML = '<div class="empty"><span class="big">No companies yet</span></div>'; return; }
+    viewRoot.innerHTML = names.map(name => `<div class="company-row" data-company="${escapeHtml(name)}">
+      <div class="name">${escapeHtml(name)}</div><div class="count">${byCompany[name].length} contact${byCompany[name].length === 1 ? '' : 's'}</div>
+    </div>`).join('');
+    viewRoot.querySelectorAll('[data-company]').forEach(row => row.addEventListener('click', () => openCompany(row.dataset.company)));
+  }
+
+  function renderCompanyPage() {
+    const name = currentCompany;
+    const list = contacts.filter(c => (c.company.trim() || '(No company)') === name).sort((a,b) => a.name.localeCompare(b.name));
+    let html = `<button class="back-link" id="backToCompanies">← All companies</button>
+      <div class="contact-header"><h2>${escapeHtml(name)}</h2></div>
+      <div id="companyContactList"></div>`;
+    viewRoot.innerHTML = html;
+    $('#backToCompanies').addEventListener('click', () => { currentView = 'companies'; setActiveNav(); render(); });
+    const listEl = $('#companyContactList');
+    listEl.innerHTML = list.map(c => `<div class="directory-row" data-open="${escapeHtml(c.contactId)}">
+        <div><div class="name">${escapeHtml(c.name)}</div><div class="co">${escapeHtml(c.email || c.phone || '')}</div></div>
+        <div class="tags">${escapeHtml(c.tags)}</div>
+        <div class="last">${(() => { const l = lastTouchDate(c.contactId); return l ? 'Last: ' + fmtDate(l) : 'No history yet'; })()}</div>
+      </div>`).join('') || '<div class="empty">No contacts at this company.</div>';
+    listEl.querySelectorAll('[data-open]').forEach(row => row.addEventListener('click', () => openContact(row.dataset.open)));
+  }
+
+  function renderContactPage() {
+    const c = contactsById[currentContactId];
+    if (!c) { viewRoot.innerHTML = '<div class="empty"><span class="big">Contact not found</span>It may have been removed. <button class="back-link" id="backToContacts">← Back to contacts</button></div>'; $('#backToContacts').addEventListener('click', () => { currentView='contacts'; setActiveNav(); render(); }); return; }
+    const history = interactions.filter(r => r.contactId === c.contactId).sort((a,b) => b.date.localeCompare(a.date));
+    let html = `<button class="back-link" id="backToContacts">← All contacts</button>
+      <div class="contact-header">
+        <div>
+          <h2>${escapeHtml(c.name)}</h2>
+          <div class="contact-meta">${escapeHtml(c.company)}${c.tags ? ' · ' + escapeHtml(c.tags) : ''}</div>
+        </div>
+      </div>
+      <div class="contact-fields">
+        <div><span class="l">Email</span>${escapeHtml(c.email) || '—'}</div>
+        <div><span class="l">Phone</span>${escapeHtml(c.phone) || '—'}</div>
+        <div><span class="l">Industry</span>${escapeHtml(c.industry) || '—'}</div>
+        <div><span class="l">How met</span>${escapeHtml(c.howMet) || '—'}</div>
+      </div>
+      <button class="btn-secondary" id="logForThisContact" style="width:auto; margin: 20px 0 4px;">+ Log interaction with ${escapeHtml(c.name)}</button>
+      <div class="day-heading" style="margin-top:24px;">History</div>
+      <div id="contactHistory"></div>`;
+    viewRoot.innerHTML = html;
+    $('#backToContacts').addEventListener('click', () => { currentView='contacts'; setActiveNav(); render(); });
+    $('#logForThisContact').addEventListener('click', () => { selectContact(c.contactId); window.scrollTo({top:0, behavior:'smooth'}); });
+    const histEl = $('#contactHistory');
+    if (!history.length) { histEl.innerHTML = '<div class="empty">No interactions logged yet.</div>'; return; }
+    histEl.innerHTML = history.map(r => `
+      <div class="entry">
+        <span class="type-tag">${TYPE_LABELS[r.type] || 'Other'}</span>
+        <div class="main">
+          ${r.notes ? `<div class="note">${escapeHtml(r.notes)}</div>` : '<div class="note" style="color:var(--ink-faint);">No notes</div>'}
+          ${followupBadge(r)}
+          ${(!r.followUpDone && r.followUpDate) ? `<button class="done-toggle" data-done="${r.rowIndex}">Mark followed up</button>` : ''}
+        </div>
+        <div class="meta"><div>${escapeHtml(r.loggedBy || 'Unknown')}</div><div>${fmtDate(r.date)}</div></div>
+      </div>`).join('');
+    wireEntryActions();
+  }
+
+  // ---------------- Add interaction ----------------
   $('#entryForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!accessToken || !cfg.spreadsheetId) { showToast('Connect a sheet first via Settings.'); return; }
-    const contact = $('#f-contact').value.trim();
-    if (!contact) return;
-    const btn = $('#submitBtn');
-    btn.disabled = true; btn.textContent = 'Adding…';
-
-    const fields = {
-      date: $('#f-date').value || todayISO(),
-      type: $('#f-type').value,
-      contactName: contact,
-      company: $('#f-company').value.trim(),
-      notes: $('#f-notes').value.trim(),
-      followUpDate: $('#f-followup').value || '',
-      followUpDone: false,
-      loggedBy: me.name || ''
-    };
-
+    if (!selectedContactId) { showToast('Pick or add a contact first.'); return; }
+    const btn = $('#submitBtn'); btn.disabled = true; btn.textContent = 'Adding…';
+    const width = Math.max(...Object.values(interactionsColIdx)) + 1;
+    const row = buildRow(width, interactionsColIdx, {
+      InteractionID: genId('i'), ContactID: selectedContactId, Type: $('#f-type').value,
+      Date: $('#f-date').value || todayISO(), Notes: $('#f-notes').value.trim(),
+      FollowUpDate: $('#f-followup').value || '', FollowUpDone: 'FALSE', LoggedBy: me.name || ''
+    });
     try {
-      const values = buildRowValues(fields);
-      const range = encodeURIComponent(`${cfg.sheetName}!A:A`);
-      await sheetsFetch(`/values/${range}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, {
-        method: 'POST',
-        body: JSON.stringify({ values: [values] })
+      await sheetsFetch(`/values/${encodeURIComponent(cfg.interactionsTab + '!A:A')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, {
+        method: 'POST', body: JSON.stringify({ values: [row] })
       });
-      showToast('Added to the ledger.');
-      $('#entryForm').reset();
-      $('#f-date').value = todayISO();
-      $('#f-type').value = 'coffee';
+      showToast('Logged.');
+      $('#entryForm').reset(); $('#f-date').value = todayISO(); $('#f-type').value = 'email';
+      selectedContactId = null; $('#selectedContactBox').innerHTML = '';
       await refresh();
     } catch (err) {
       console.error(err);
       showToast("Couldn't save to the sheet — check Settings and try again.");
-    } finally {
-      btn.disabled = false; btn.textContent = 'Add to the ledger';
-    }
+    } finally { btn.disabled = false; btn.textContent = 'Add to the ledger'; }
   });
 
   // ---------------- Boot ----------------
-  function renderSignInPrompt() {
-    const box = $('#viewerBox');
-    box.innerHTML = `<button class="icon-btn" id="signInBtn">Sign in with Google</button><button class="icon-btn" id="settingsBtn">Settings</button>`;
-    $('#signInBtn').addEventListener('click', () => signIn('refresh'));
-    $('#settingsBtn').addEventListener('click', openSettings);
-  }
-
   window.addEventListener('load', () => {
-    if (cfg.clientId && cfg.apiKey && cfg.spreadsheetId) {
-      renderSignInPrompt();
-    } else {
-      openSettings();
-    }
+    if (cfg.clientId && cfg.apiKey && cfg.spreadsheetId) renderSignInPrompt();
+    else openSettings();
   });
 })();
 </script>
